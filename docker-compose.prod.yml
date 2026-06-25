@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: grh_postgres_prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-grh_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    restart: always
+    # Exposing port locally only (not to public) for security, or change to "5432:5432" if remote management is required
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  # MinIO Object Storage Service (for local files, unless AWS S3 is preferred)
+  minio:
+    image: minio/minio
+    container_name: grh_minio_prod
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-admin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-supersecretpassword}
+    volumes:
+      - minio_prod_data:/data
+    command: server /data --console-address ":9001"
+    restart: always
+    # MinIO console can be exposed to localhost for security
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+
+  # Spring Boot Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: grh_backend_prod
+    depends_on:
+      - postgres
+      - minio
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-grh_db}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - S3_ENDPOINT=${S3_ENDPOINT:-http://minio:9000}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY:-admin}
+      - S3_SECRET_KEY=${S3_SECRET_KEY:-supersecretpassword}
+      - S3_BUCKET=${S3_BUCKET:-grh-pictures}
+      - APP_JWT_SECRET=${JWT_SECRET:-Gj5pX92sKz8wV1a4m7d8f9g0hJkLmNpQrStUvWxYz1234567890abcdefghijklmnopqrstuv}
+    restart: always
+    # No need to expose port 8080 to the host since frontend Nginx will proxy it inside the docker network
+
+  # Angular Frontend served via Nginx (Reverse Proxy)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: grh_frontend_prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_prod_data:
+  minio_prod_data:

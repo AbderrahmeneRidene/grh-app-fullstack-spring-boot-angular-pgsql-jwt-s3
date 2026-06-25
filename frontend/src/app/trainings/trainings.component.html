@@ -1,0 +1,205 @@
+<div class="trainings-wrapper animated-fade">
+  <div class="page-header">
+    <div class="header-title">
+      <h1>متابعة الدورات التكوينية والتدريبية</h1>
+      <p>برمجة الدورات التدريبية، ترسيم الأعوان، تقييم الأداء وإسناد الشهادات التكوينية</p>
+    </div>
+    <div class="header-actions">
+      <button (click)="fetchTrainings()" class="btn btn-secondary">
+        <i class="fa-solid fa-arrows-rotate"></i> تحديث
+      </button>
+      <button *ngIf="canCreate()" (click)="openCreateModal()" class="btn btn-primary">
+        <i class="fa-solid fa-calendar-plus"></i> برمجة دورة جديدة
+      </button>
+    </div>
+  </div>
+
+  <!-- Liste des formations - pleine largeur -->
+  <div class="glass-card">
+    <div class="container-header">
+      <h3>قائمة الدورات التكوينية</h3>
+      <span class="count-badge">{{ trainingsList.length }} دورة</span>
+    </div>
+
+    <div class="training-cards">
+      <div class="glass-card training-item-card" *ngFor="let t of trainingsList">
+        <div class="training-card-header">
+          <div class="training-title-block">
+            <h4>{{ t.titleAr }}</h4>
+            <span class="inst-tag"><i class="fa-solid fa-building-columns"></i> {{ t.institution }}</span>
+          </div>
+          <div class="training-card-dates">
+            <span><i class="fa-solid fa-calendar-days"></i> من: {{ t.startDate }}</span>
+            <span><i class="fa-solid fa-calendar-check"></i> إلى: {{ t.endDate }}</span>
+          </div>
+        </div>
+        <div class="training-card-actions" style="display: flex; gap: 10px;">
+          <button (click)="openEnrollmentsModal(t)" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-users"></i> الأعوان المرسمون
+          </button>
+          <button *ngIf="canCreate()" (click)="openEditTrainingModal(t)" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-pen"></i> تعديل الدورة
+          </button>
+        </div>
+      </div>
+      <div *ngIf="trainingsList.length === 0" class="no-data">لا توجد دورات تكوينية مسجلة حالياً</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Inscriptions & Évaluations -->
+<div class="modal-overlay animated-fade" *ngIf="isEnrollmentsModalOpen" (click)="closeEnrollmentsModal()">
+  <div class="modal-card modal-lg glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-users"></i> الأعوان المرسمون: {{ selectedTraining?.titleAr }}</h3>
+      <button (click)="closeEnrollmentsModal()" class="btn-close">&times;</button>
+    </div>
+
+    <!-- Formulaire inscription rapide -->
+    <div class="quick-enroll-form" *ngIf="canEnroll()">
+      <h4><i class="fa-solid fa-user-plus"></i> ترسيم عون جديد في هذه الدورة</h4>
+      <div class="enroll-inline">
+        <select class="form-control" [(ngModel)]="selectedPersonnelId">
+          <option value="" disabled>اختر العون</option>
+          <option *ngFor="let p of personnelList" [value]="p.id">{{ p.firstNameAr }} {{ p.lastNameAr }} (رتبة: {{ p.grade }})</option>
+        </select>
+        <button (click)="enrollPersonnel()" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus"></i> ترسيم
+        </button>
+      </div>
+    </div>
+
+    <!-- Liste des agents inscrits -->
+    <div class="enrollments-list">
+      <div class="enrollment-row" *ngFor="let e of enrollmentsList">
+        <div class="enroll-user-info">
+          <strong>{{ e.personnelFullNameAr }}</strong>
+          <span class="status-badge" [class.status-ongoing]="e.status === 'EN_COURS'" [class.status-passed]="e.status === 'TERMINE'" [class.status-failed]="e.status === 'ECHOUE'">
+            {{ getStatusAr(e.status) }}
+          </span>
+        </div>
+        <div class="enroll-evaluation" *ngIf="e.evaluation">
+          <i class="fa-solid fa-square-poll-vertical"></i> التقييم: {{ e.evaluation }}
+        </div>
+
+        <!-- Formulaire évaluation -->
+        <div class="eval-actions" *ngIf="canEvaluate() && e.status === 'EN_COURS'">
+          <input type="text" class="form-control form-control-sm" placeholder="التقييم (مثال: بملاحظة حسن جداً - 16/20)" [(ngModel)]="evalNotes[e.id]">
+          <div class="eval-btn-group">
+            <button (click)="evaluateEnrollment(e.id, 'TERMINE', evalNotes[e.id])" class="btn btn-success btn-sm"><i class="fa-solid fa-check"></i> نجاح</button>
+            <button (click)="evaluateEnrollment(e.id, 'ECHOUE', evalNotes[e.id])" class="btn btn-danger btn-sm"><i class="fa-solid fa-xmark"></i> رسوب</button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="enrollmentsList.length === 0" class="no-data">لا يوجد أي أعوان مرسمين في هذه الدورة التكوينية</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Créer une formation -->
+<div class="modal-overlay animated-fade" *ngIf="isCreateModalOpen" (click)="closeCreateModal()">
+  <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-calendar-plus"></i> برمجة دورة تكوينية جديدة</h3>
+      <button (click)="closeCreateModal()" class="btn-close">&times;</button>
+    </div>
+
+    <form (ngSubmit)="onCreateTraining()" #trainingForm="ngForm" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">اسم الدورة التكوينية (عربي) <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="titleAr" required [(ngModel)]="newTraining.titleAr" placeholder="مثال: دورة القيادة الأمنية العليا">
+        <div *ngIf="newTraining.titleAr && getArabicTitleError(newTraining.titleAr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getArabicTitleError(newTraining.titleAr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nom de la formation (fr) <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="titleFr" required [(ngModel)]="newTraining.titleFr" placeholder="ex: Formation en Leadership Securitaire">
+        <div *ngIf="newTraining.titleFr && getFrenchTitleError(newTraining.titleFr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getFrenchTitleError(newTraining.titleFr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">مقر ومؤسسة التكوين <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="institution" required [(ngModel)]="newTraining.institution" placeholder="مثال: مدرسة صلامبو">
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="startDate" required [(ngModel)]="newTraining.startDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="endDate" required [(ngModel)]="newTraining.endDate">
+        </div>
+      </div>
+      <div *ngIf="newTraining.startDate && newTraining.endDate && getDateRangeError(newTraining.startDate, newTraining.endDate)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px; padding: 0 10px;">
+        {{ getDateRangeError(newTraining.startDate, newTraining.endDate) }}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeCreateModal()" class="btn btn-secondary">إلغاء</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isTrainingFormValid(false)">
+          <i class="fa-solid fa-calendar-plus"></i> برمجة الدورة
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Modifier une formation -->
+<div class="modal-overlay animated-fade" *ngIf="isEditTrainingModalOpen" (click)="closeEditTrainingModal()">
+  <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-pen"></i> تعديل الدورة التكوينية</h3>
+      <button (click)="closeEditTrainingModal()" class="btn-close">&times;</button>
+    </div>
+
+    <form (ngSubmit)="onUpdateTraining()" #editTrainingForm="ngForm" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">اسم الدورة التكوينية (عربي) <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="editTitleAr" required [(ngModel)]="editTraining.titleAr">
+        <div *ngIf="editTraining.titleAr && getArabicTitleError(editTraining.titleAr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getArabicTitleError(editTraining.titleAr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nom de la formation (fr) <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="editTitleFr" required [(ngModel)]="editTraining.titleFr">
+        <div *ngIf="editTraining.titleFr && getFrenchTitleError(editTraining.titleFr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getFrenchTitleError(editTraining.titleFr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">مقر ومؤسسة التكوين <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="editInstitution" required [(ngModel)]="editTraining.institution">
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="editStartDate" required [(ngModel)]="editTraining.startDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ النهاية <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" name="editEndDate" required [(ngModel)]="editTraining.endDate">
+        </div>
+      </div>
+      <div *ngIf="editTraining.startDate && editTraining.endDate && getDateRangeError(editTraining.startDate, editTraining.endDate)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px; padding: 0 10px;">
+        {{ getDateRangeError(editTraining.startDate, editTraining.endDate) }}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeEditTrainingModal()" class="btn btn-secondary">إلغاء</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isTrainingFormValid(true)">
+          <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

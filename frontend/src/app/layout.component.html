@@ -1,0 +1,296 @@
+<div class="app-container" (click)="closeDropdown()">
+  <!-- Sidebar de droite (RTL) -->
+  <aside class="sidebar glass-card">
+    <div class="sidebar-header">
+      <img src="assets/logo.png" class="school-logo-small" alt="Logo">
+      <h2>منظومة GRH</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item" *ngIf="canViewDashboard()">
+        <i class="fa-solid fa-chart-line icon"></i>
+        <span>لوحة القيادة</span>
+      </a>
+
+      <a routerLink="/organization" routerLinkActive="active" class="nav-item">
+        <i class="fa-solid fa-sitemap icon"></i>
+        <span>الهيكل التنظيمي</span>
+      </a>
+
+      <a routerLink="/personnel" routerLinkActive="active" class="nav-item" *ngIf="canViewPersonnel()">
+        <i class="fa-solid fa-users-gear icon"></i>
+        <span>إدارة الموظفين</span>
+      </a>
+
+      <a routerLink="/archive" routerLinkActive="active" class="nav-item" *ngIf="canViewArchive()">
+        <i class="fa-solid fa-box-archive icon"></i>
+        <span>أرشيف الموظفين</span>
+      </a>
+
+      <a routerLink="/leaves" routerLinkActive="active" class="nav-item" *ngIf="canManageLeaves()">
+        <i class="fa-solid fa-calendar-check icon"></i>
+        <span>الرخص والإجازات</span>
+      </a>
+
+      <a routerLink="/my-leaves" routerLinkActive="active" class="nav-item">
+        <i class="fa-solid fa-file-waveform icon"></i>
+        <span>رخصي وإجازاتي</span>
+      </a>
+
+      <a routerLink="/trainings" routerLinkActive="active" class="nav-item">
+        <i class="fa-solid fa-graduation-cap icon"></i>
+        <span>التكوين والتدريب</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="content-wrapper">
+    <!-- Top Navbar -->
+    <header class="navbar glass-card">
+      <div class="navbar-brand">
+        <h3>{{ currentAdminName }}</h3>
+        <span class="sub-brand">وزارة الداخلية - الجمهورية التونسية</span>
+      </div>
+
+      <div class="user-profile" *ngIf="user" (click)="toggleDropdown($event)">
+        <div class="profile-info">
+          <span class="user-name">
+            {{ user.fullNameAr }}
+            <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-right: 4px;"></i>
+          </span>
+          <span class="user-role">
+            <i class="fa-solid fa-shield-halved"></i>
+            {{ user.grade || 'إداري' }} | {{ user.orgUnitNameAr || 'الإدارة العامة' }}
+          </span>
+        </div>
+        <div class="avatar" style="overflow: hidden; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+          <img [src]="getAvatar(user)" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+
+        <!-- Dropdown Menu -->
+        <div class="profile-dropdown-menu" *ngIf="isDropdownOpen" (click)="$event.stopPropagation()">
+          <button class="dropdown-item" (click)="openProfileModal($event)">
+            <i class="fa-solid fa-id-card"></i>
+            <span>بيانات الحساب</span>
+          </button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item text-danger" (click)="logout()">
+            <i class="fa-solid fa-power-off"></i>
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dynamic router content page -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
+<!-- ====== Modal: Fiche Profil & Paramètres Compte (Overlay) ====== -->
+<div class="modal-overlay animated-fade" *ngIf="isProfileModalOpen" (click)="closeProfileModal()">
+  <div class="modal-card modal-xl glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="profile-header-info">
+        <img [src]="getAvatar(user)" (click)="openImagePreview($event)" class="avatar-clickable" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); flex-shrink: 0; cursor: pointer;" alt="Avatar">
+        <div>
+          <h3>{{ user?.fullNameAr }}</h3>
+          <span class="profile-reg" *ngIf="profileDetails">معرّف: {{ profileDetails.registrationNumber }} | {{ profileDetails.grade }}</span>
+          <span class="profile-reg" *ngIf="!profileDetails">{{ user?.username }} (مدير النظام)</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button *ngIf="user?.personnelId" (click)="toggleEditAccount()" class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid" [ngClass]="isEditingAccount ? 'fa-id-card' : 'fa-user-gear'"></i>
+          <span>{{ isEditingAccount ? 'الرجوع للملف' : 'تعديل الحساب' }}</span>
+        </button>
+        <button (click)="closeProfileModal()" class="btn-close">&times;</button>
+      </div>
+    </div>
+
+    <!-- Mode: Affichage du profil complet -->
+    <div *ngIf="!isEditingAccount">
+      <!-- Navigation tabs inside the modal -->
+      <div class="profile-nav-tabs">
+        <button *ngIf="profileDetails" (click)="activeTab = 'info'" [class.active]="activeTab === 'info'" class="tab-btn">
+          <i class="fa-solid fa-id-card"></i> البيانات الأساسية
+        </button>
+        <button *ngIf="profileDetails" (click)="activeTab = 'children'" [class.active]="activeTab === 'children'" class="tab-btn">
+          <i class="fa-solid fa-children"></i> الأطفال
+        </button>
+        <button *ngIf="profileDetails" (click)="activeTab = 'stages'" [class.active]="activeTab === 'stages'" class="tab-btn">
+          <i class="fa-solid fa-user-gear"></i> التربصات والتكوين المهني
+        </button>
+        <button *ngIf="profileDetails" (click)="activeTab = 'academic'" [class.active]="activeTab === 'academic'" class="tab-btn">
+          <i class="fa-solid fa-graduation-cap"></i> المسار الجامعي
+        </button>
+        <button *ngIf="profileDetails" (click)="activeTab = 'career'" [class.active]="activeTab === 'career'" class="tab-btn">
+          <i class="fa-solid fa-angles-up"></i> التدرج الوظيفي
+        </button>
+      </div>
+
+      <div class="profile-tab-content">
+        <!-- Tab Info -->
+        <div *ngIf="profileDetails && activeTab === 'info'" class="tab-pane animated-fade">
+          <div class="info-grid">
+            <div class="info-item"><span class="lbl">الإسم الإداري</span><span class="val">{{ profileDetails.firstNameAr }} {{ profileDetails.fatherNameAr }} {{ profileDetails.lastNameAr }}</span></div>
+            <div class="info-item"><span class="lbl">اسم الأب (عربي)</span><span class="val">{{ profileDetails.fatherNameAr }}</span></div>
+            <div class="info-item"><span class="lbl">تاريخ الولادة</span><span class="val">{{ profileDetails.dateOfBirth }}</span></div>
+            <div class="info-item"><span class="lbl">الرتبة الحالية</span><span class="val">{{ profileDetails.grade }}</span></div>
+            <div class="info-item"><span class="lbl">الخطة الوظيفية</span><span class="val">{{ getPostLabel(profileDetails.functionalPost) }}</span></div>
+            <div class="info-item"><span class="lbl">الجنس (السكس)</span><span class="val">{{ getGenderLabel(profileDetails.gender) }}</span></div>
+            <div class="info-item"><span class="lbl">الحالة الاجتماعية</span><span class="val">{{ getMaritalStatusLabel(profileDetails.maritalStatus) }}</span></div>
+            <div class="info-item"><span class="lbl">رقم الهاتف</span><span class="val">{{ profileDetails.phoneNumber || 'غير متوفر' }}</span></div>
+            <div class="info-item"><span class="lbl">رقم الهاتف الثاني</span><span class="val">{{ profileDetails.phoneNumber2 || 'غير متوفر' }}</span></div>
+            <div class="info-item"><span class="lbl">هاتف طوارئ (أحد الأقارب)</span><span class="val">{{ profileDetails.emergencyPhone || 'غير متوفر' }}</span></div>
+            <div class="info-item"><span class="lbl">الإدارة الفرعية / المصلحة</span><span class="val">{{ profileDetails.organizationalUnitNameAr }}</span></div>
+            <div class="info-item"><span class="lbl">البريد الإلكتروني</span><span class="val">{{ profileDetails.email || 'غير متوفر' }}</span></div>
+            <div class="info-item"><span class="lbl">اسم المستخدم للمنظومة</span><span class="val"><code>{{ profileDetails.username || 'بدون حساب' }}</code></span></div>
+          </div>
+        </div>
+
+        <!-- Tab Children -->
+        <div *ngIf="profileDetails && activeTab === 'children'" class="tab-pane animated-fade">
+          <div class="timeline">
+            <div class="timeline-item" *ngFor="let c of profileDetails.children">
+              <div class="timeline-icon"><i class="fa-solid fa-child"></i></div>
+              <div class="timeline-content">
+                <h4>{{ c.name }}</h4>
+                <span class="timeline-date">تاريخ الولادة: {{ c.birthDate }}</span>
+              </div>
+            </div>
+            <div *ngIf="!profileDetails.children || profileDetails.children.length === 0" class="no-timeline-data">
+              لا يوجد أطفال مسجلون
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Stages -->
+        <div *ngIf="profileDetails && activeTab === 'stages'" class="tab-pane animated-fade">
+          <div class="timeline">
+            <div class="timeline-item" *ngFor="let s of profileDetails.stages">
+              <div class="timeline-icon"><i class="fa-solid fa-user-gear"></i></div>
+              <div class="timeline-content">
+                <h4>{{ s.title }}</h4>
+                <p>المؤسسة/المكان: {{ s.institution }}</p>
+                <span class="timeline-date">تاريخ البدء: {{ s.startDate }} | المدة: {{ s.duration }}</span>
+              </div>
+            </div>
+            <div *ngIf="!profileDetails.stages || profileDetails.stages.length === 0" class="no-timeline-data">
+              لا توجد تربصات أو دورات تكوينية مسجلة
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Academic -->
+        <div *ngIf="profileDetails && activeTab === 'academic'" class="tab-pane animated-fade">
+          <div class="timeline">
+            <div class="timeline-item" *ngFor="let ab of academicList">
+              <div class="timeline-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+              <div class="timeline-content">
+                <h4>{{ ab.degreeName }}</h4>
+                <p>الاختصاص: {{ ab.specialty }}</p>
+                <span class="timeline-date">{{ ab.university }} | سنة التخرج: {{ ab.graduationYear }}</span>
+              </div>
+            </div>
+            <div *ngIf="academicList.length === 0" class="no-timeline-data">لا توجد شواهد علمية مسجلة حالياً</div>
+          </div>
+        </div>
+
+        <!-- Tab Career -->
+        <div *ngIf="profileDetails && activeTab === 'career'" class="tab-pane animated-fade">
+          <div class="timeline">
+            <div class="timeline-item" *ngFor="let cp of careerList">
+              <div class="timeline-icon"><i class="fa-solid fa-angles-up"></i></div>
+              <div class="timeline-content">
+                <h4>تحديث الرتبة إلى: {{ cp.newGrade }}</h4>
+                <p>الرتبة السابقة: {{ cp.previousGrade }}</p>
+                <span class="timeline-date">تاريخ الترقية: {{ cp.promotionDate }} | المرجع: {{ cp.decreeReference || 'غير محدد' }}</span>
+              </div>
+            </div>
+            <div *ngIf="careerList.length === 0" class="no-timeline-data">لم يتم تسجيل أي ترقية سابقة</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode: Édition des paramètres du compte -->
+    <div *ngIf="isEditingAccount" style="padding-top: 15px;">
+      <form (ngSubmit)="onUpdateProfile()" #profileForm="ngForm" class="modal-form" style="padding: 0; max-width: 600px; margin: 0 auto;">
+        <div class="form-group">
+          <label class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="username" required [(ngModel)]="profileFormModel.username" placeholder="اسم المستخدم للدخول">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
+          <input type="email" class="form-control" name="email" required [(ngModel)]="profileFormModel.email" placeholder="البريد الإلكتروني">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الحالية لتعديل كلمة المرور</label>
+          <div style="display: flex; gap: 10px;">
+            <div class="password-wrapper" style="flex: 1; position: relative;">
+              <input [type]="showCurrentPassword ? 'text' : 'password'" class="form-control" name="currentPassword" [(ngModel)]="profileFormModel.currentPassword" placeholder="أدخل كلمة المرور الحالية" [disabled]="isCurrentPasswordVerified">
+              <button type="button" class="btn-toggle-password" (click)="showCurrentPassword = !showCurrentPassword" tabindex="-1" title="إظهار/إخفاء كلمة المرور" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                <i [class]="showCurrentPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+              </button>
+            </div>
+            <button type="button" class="btn btn-secondary" (click)="verifyCurrentPassword()" [disabled]="isCurrentPasswordVerified || !profileFormModel.currentPassword">تحقق</button>
+          </div>
+          <div *ngIf="isCurrentPasswordVerified" class="text-success" style="font-size: 12px; margin-top: 5px; font-weight: bold; color: var(--success);">
+            <i class="fa-solid fa-circle-check"></i> تم التحقق من كلمة المرور الحالية بنجاح
+          </div>
+        </div>
+
+        <div *ngIf="isCurrentPasswordVerified">
+          <div class="form-group">
+            <label class="form-label">كلمة مرور جديدة <span class="text-danger">*</span></label>
+            <div class="password-wrapper" style="position: relative;">
+              <input [type]="showNewPassword ? 'text' : 'password'" class="form-control" name="password" required [(ngModel)]="profileFormModel.password" placeholder="كلمة المرور الجديدة">
+              <button type="button" class="btn-toggle-password" (click)="showNewPassword = !showNewPassword" tabindex="-1" title="إظهار/إخفاء كلمة المرور" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                <i [class]="showNewPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">تأكيد كلمة المرور الجديدة <span class="text-danger">*</span></label>
+            <div class="password-wrapper" style="position: relative;">
+              <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" name="confirmPassword" required [(ngModel)]="profileFormModel.confirmPassword" placeholder="تأكيد كلمة المرور">
+              <button type="button" class="btn-toggle-password" (click)="showConfirmPassword = !showConfirmPassword" tabindex="-1" title="إظهار/إخفاء كلمة المرور" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer;">
+                <i [class]="showConfirmPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 15px 0 0 0; background: none; border-top: none; display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" (click)="toggleEditAccount()" *ngIf="user?.personnelId" class="btn btn-secondary">إلغاء</button>
+          <button type="button" (click)="closeProfileModal()" *ngIf="!user?.personnelId" class="btn btn-secondary">إلغاء</button>
+          <button type="submit" class="btn btn-primary" [disabled]="!profileForm.form.valid">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ التغييرات
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de prévisualisation d'image -->
+<div class="modal-overlay image-preview-overlay animated-fade" *ngIf="isImagePreviewOpen" (click)="closeImagePreview()">
+  <div class="modal-card image-preview-card glass-card" (click)="$event.stopPropagation()">
+    <button (click)="closeImagePreview()" class="btn-close image-preview-close">&times;</button>
+    <div class="image-preview-content">
+      <img [src]="getAvatar(user)" class="image-preview-full" alt="صورة الملف الشخصي">
+      <div class="image-preview-info">
+        <h3>{{ user?.fullNameAr }}</h3>
+        <p *ngIf="profileDetails">{{ profileDetails.registrationNumber }} - {{ profileDetails.grade }}</p>
+        <p *ngIf="!profileDetails">{{ user?.username }} - مدير النظام</p>
+      </div>
+    </div>
+  </div>
+</div>

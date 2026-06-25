@@ -1,0 +1,58 @@
+<div class="login-container">
+  <div class="glass-card login-card animated-fade">
+    <div class="logo-wrapper">
+      <img src="assets/logo.png" class="school-logo" alt="Logo Officiel">
+      <h2>وزارة الداخـليّة</h2>
+      <h3>المدرسة الوطنية لتكوين إطارات الأمن الوطني والشرطة الوطنية بصلامبو</h3>
+    </div>
+    
+    <h1 class="title">تسجيل الدخول إلى منظومة GRH</h1>
+    
+    <div *ngIf="errorMessage" class="error-banner">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+      <div class="form-group">
+        <label class="form-label" for="username">اسم المستخدم</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-user input-icon"></i>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="form-control" 
+            placeholder="أدخل اسم المستخدم"
+            [(ngModel)]="credentials.username" 
+            required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">كلمة المرور</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            id="password" 
+            name="password" 
+            class="form-control" 
+            placeholder="أدخل كلمة المرور"
+            [(ngModel)]="credentials.password" 
+            required>
+          <button type="button" class="btn-toggle-password" (click)="showPassword = !showPassword" tabindex="-1" title="إظهار/إخفاء كلمة المرور">
+            <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" [disabled]="!loginForm.form.valid">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        <span>تسجيل الدخول</span>
+      </button>
+    </form>
+
+
+  </div>
+</div>

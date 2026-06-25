@@ -1,0 +1,267 @@
+<div class="org-wrapper animated-fade">
+  <!-- Notification Banner -->
+  <div *ngIf="notificationMessage" class="notification-banner" [ngClass]="notificationType">
+    <i class="fa-solid" [ngClass]="notificationType === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'"></i>
+    <span>{{ notificationMessage }}</span>
+  </div>
+
+  <div class="page-header">
+    <div class="header-title">
+      <h1>إدارة الهيكل التنظيمي</h1>
+      <p>عرض وتعديل التقسيمات الإدارية والمصالح التابعة للمؤسسة</p>
+    </div>
+    <button *ngIf="canManage()" (click)="openAddModal()" class="btn btn-primary">
+      <i class="fa-solid fa-plus"></i> إضافة هيكل جديد
+    </button>
+  </div>
+
+  <!-- Visualiseur d'organigramme -->
+  <div class="glass-card tree-container">
+    <div class="container-header">
+      <h3>شجرة الهيكل التنظيمي الحالي</h3>
+      <button (click)="refreshTree()" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-arrows-rotate"></i> تحديث
+      </button>
+    </div>
+
+    <div class="tree-body">
+      <div *ngIf="treeData.length === 0" class="no-data">جاري تحميل الهيكل التنظيمي...</div>
+      <div class="tree-root" *ngFor="let node of treeData">
+
+        <!-- Niveau 1: Direction -->
+        <div class="tree-node root-node">
+          <i class="fa-solid fa-building-columns icon-node"></i>
+          <div class="node-details">
+            <span class="name-ar">{{ node.nameAr }}</span>
+            <span class="name-fr">{{ node.nameFr }}</span>
+          </div>
+          <span class="badge-type root-badge">إدارة</span>
+          <div class="node-actions" *ngIf="canManage()">
+            <button (click)="openEditModal({id: node.id, nameAr: node.nameAr, nameFr: node.nameFr, type: node.type, parentId: null})" class="node-btn-edit" title="تعديل">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button (click)="deleteUnit(node.id)" class="node-btn-delete" title="حذف">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Niveau 2: Sous-Directions & Qism -->
+        <div class="child-level-1" *ngIf="node.children && node.children.length > 0">
+          <div class="sub-tree-branch" *ngFor="let sd of node.children">
+
+            <!-- Sous-Direction ou Qism -->
+            <div class="tree-node" [class.sd-node]="sd.type === 'SOUS_DIRECTION'" [class.qism-node]="sd.type === 'QISM'">
+              <i class="fa-solid fa-folder-open icon-node" *ngIf="sd.type === 'SOUS_DIRECTION'"></i>
+              <i class="fa-solid fa-layer-group icon-node" *ngIf="sd.type === 'QISM'"></i>
+              <div class="node-details">
+                <span class="name-ar">{{ sd.nameAr }}</span>
+                <span class="name-fr">{{ sd.nameFr }}</span>
+              </div>
+              <span class="badge-type sd-badge" *ngIf="sd.type === 'SOUS_DIRECTION'">إدارة فرعية</span>
+              <span class="badge-type qism-badge" *ngIf="sd.type === 'QISM'">قسم</span>
+              <div class="node-actions" *ngIf="canManage()">
+                <button (click)="openEditModal({id: sd.id, nameAr: sd.nameAr, nameFr: sd.nameFr, type: sd.type, parentId: node.id})" class="node-btn-edit" title="تعديل">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button (click)="deleteUnit(sd.id)" class="node-btn-delete" title="حذف">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Niveau 3: Services & Qism -->
+            <div class="child-level-2" *ngIf="sd.children && sd.children.length > 0">
+              <div class="sub-tree-branch" *ngFor="let sd2 of sd.children">
+                <div class="tree-node" [class.service-node]="sd2.type === 'SERVICE'" [class.qism-node]="sd2.type === 'QISM'">
+                  <i class="fa-solid fa-circle-nodes icon-node" *ngIf="sd2.type === 'SERVICE'"></i>
+                  <i class="fa-solid fa-layer-group icon-node" *ngIf="sd2.type === 'QISM'"></i>
+                  <div class="node-details">
+                    <span class="name-ar">{{ sd2.nameAr }}</span>
+                    <span class="name-fr">{{ sd2.nameFr }}</span>
+                  </div>
+                  <span class="badge-type service-badge" *ngIf="sd2.type === 'SERVICE'">مصلحة</span>
+                  <span class="badge-type qism-badge" *ngIf="sd2.type === 'QISM'">قسم</span>
+                  <div class="node-actions" *ngIf="canManage()">
+                    <button (click)="openEditModal({id: sd2.id, nameAr: sd2.nameAr, nameFr: sd2.nameFr, type: sd2.type, parentId: sd.id})" class="node-btn-edit" title="تعديل">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button (click)="deleteUnit(sd2.id)" class="node-btn-delete" title="حذف">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Niveau 4: Divisions (Qism) enfants des Services -->
+                <div class="child-level-3" *ngIf="sd2.children && sd2.children.length > 0">
+                  <div class="tree-node qism-node" *ngFor="let sd3 of sd2.children">
+                    <i class="fa-solid fa-layer-group icon-node"></i>
+                    <div class="node-details">
+                      <span class="name-ar">{{ sd3.nameAr }}</span>
+                      <span class="name-fr">{{ sd3.nameFr }}</span>
+                    </div>
+                    <span class="badge-type qism-badge">{{ getTypeLabel(sd3.type) }}</span>
+                    <div class="node-actions" *ngIf="canManage()">
+                      <button (click)="openEditModal({id: sd3.id, nameAr: sd3.nameAr, nameFr: sd3.nameFr, type: sd3.type, parentId: sd2.id})" class="node-btn-edit" title="تعديل">
+                        <i class="fa-solid fa-pen"></i>
+                      </button>
+                      <button (click)="deleteUnit(sd3.id)" class="node-btn-delete" title="حذف">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Modal: Ajout Heiarchy ====== -->
+<div class="modal-overlay animated-fade" *ngIf="isAddUnitModalOpen" (click)="closeAddModal()">
+  <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-sitemap"></i> إضافة هيكل / وحدة إدارية جديدة</h3>
+      <button (click)="closeAddModal()" class="btn-close">&times;</button>
+    </div>
+
+    <form (ngSubmit)="onCreateUnit()" #unitForm="ngForm" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">الاسم باللغة العربية <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="nameAr" required [(ngModel)]="newUnit.nameAr" placeholder="مثال: مصلحة الشؤون المالية">
+        <div *ngIf="newUnit.nameAr && getArabicNameError(newUnit.nameAr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getArabicNameError(newUnit.nameAr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الاسم باللغة الفرنسية <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="nameFr" required [(ngModel)]="newUnit.nameFr" placeholder="ex: Service des Affaires Financieres">
+        <div *ngIf="newUnit.nameFr && getFrenchNameError(newUnit.nameFr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getFrenchNameError(newUnit.nameFr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">نوع التقسيم الإداري <span class="text-danger">*</span></label>
+        <select class="form-control" name="type" required [(ngModel)]="newUnit.type" (ngModelChange)="onTypeChange()">
+          <option value="" disabled>اختر النوع</option>
+          <option value="DIRECTION">إدارة (Direction)</option>
+          <option value="SOUS_DIRECTION">إدارة فرعية (Sous-Direction)</option>
+          <option value="QISM">قسم (Division)</option>
+          <option value="SERVICE">مصلحة (Service)</option>
+        </select>
+      </div>
+
+      <!-- Parent selector — shown only when a type requiring parent is selected -->
+      <div class="form-group" *ngIf="newUnit.type === 'SOUS_DIRECTION' || newUnit.type === 'SERVICE' || newUnit.type === 'QISM'">
+        <label class="form-label">التبعية (الهيكل الأعلى)</label>
+        <div class="filter-hint" *ngIf="newUnit.type === 'SOUS_DIRECTION'">
+          <i class="fa-solid fa-circle-info"></i> تُربط الإدارة الفرعية فقط بـ <strong>إدارة</strong>
+        </div>
+        <div class="filter-hint" *ngIf="newUnit.type === 'SERVICE'">
+          <i class="fa-solid fa-circle-info"></i> تُربط المصلحة بـ <strong>إدارة فرعية أو إدارة</strong>
+        </div>
+        <div class="filter-hint" *ngIf="newUnit.type === 'QISM'">
+          <i class="fa-solid fa-circle-info"></i> يُربط القسم بـ <strong>مصلحة أو إدارة فرعية أو إدارة</strong>
+        </div>
+        <select class="form-control" name="parentId" [(ngModel)]="newUnit.parentId">
+          <option [ngValue]="null">لا يوجد (مستوى رئيسي)</option>
+          <option *ngFor="let node of filteredParentList" [value]="node.id">
+            {{ node.nameAr }} — <em>{{ getTypeLabel(node.type) }}</em>
+          </option>
+        </select>
+        <div *ngIf="newUnit.type && getParentUnitError(newUnit.type, newUnit.parentId)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getParentUnitError(newUnit.type, newUnit.parentId) }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeAddModal()" class="btn btn-secondary">إلغاء</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isUnitFormValid(false)">
+          <i class="fa-solid fa-plus"></i> إضافة إلى الهيكل
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ====== Modal: Édition ====== -->
+<div class="modal-overlay animated-fade" *ngIf="isEditUnitModalOpen" (click)="closeEditModal()">
+  <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-pen-to-square"></i> تعديل الوحدة الإدارية</h3>
+      <button (click)="closeEditModal()" class="btn-close">&times;</button>
+    </div>
+
+    <form (ngSubmit)="onUpdateUnit()" #editForm="ngForm" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">الاسم باللغة العربية <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="editNameAr" required [(ngModel)]="editUnit.nameAr">
+        <div *ngIf="editUnit.nameAr && getArabicNameError(editUnit.nameAr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getArabicNameError(editUnit.nameAr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الاسم باللغة الفرنسية <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="editNameFr" required [(ngModel)]="editUnit.nameFr">
+        <div *ngIf="editUnit.nameFr && getFrenchNameError(editUnit.nameFr)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getFrenchNameError(editUnit.nameFr) }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">نوع التقسيم الإداري <span class="text-danger">*</span></label>
+        <select class="form-control" name="editType" required [(ngModel)]="editUnit.type" (ngModelChange)="onEditTypeChange()">
+          <option value="DIRECTION">إدارة (Direction)</option>
+          <option value="SOUS_DIRECTION">إدارة فرعية (Sous-Direction)</option>
+          <option value="QISM">قسم (Division)</option>
+          <option value="SERVICE">مصلحة (Service)</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="editUnit.type !== 'DIRECTION'">
+        <label class="form-label">التبعية (الهيكل الأعلى)</label>
+        <select class="form-control" name="editParentId" [(ngModel)]="editUnit.parentId">
+          <option [ngValue]="null">لا يوجد (مستوى رئيسي)</option>
+          <option *ngFor="let node of filteredEditParentList" [value]="node.id">
+            {{ node.nameAr }} — <em>{{ getTypeLabel(node.type) }}</em>
+          </option>
+        </select>
+        <div *ngIf="editUnit.type && getParentUnitError(editUnit.type, editUnit.parentId)" class="text-danger error-msg-hint" style="font-size: 12px; margin-top: 4px;">
+          {{ getParentUnitError(editUnit.type, editUnit.parentId) }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeEditModal()" class="btn btn-secondary">إلغاء</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isUnitFormValid(true)">
+          <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ====== Modal: Erreur Suppression (avec personnel) ====== -->
+<div class="modal-overlay animated-fade" *ngIf="isErrorModalOpen" (click)="closeErrorModal()">
+  <div class="modal-card modal-error glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header error-header">
+      <h3><i class="fa-solid fa-triangle-exclamation"></i> تعذّر الحذف</h3>
+      <button (click)="closeErrorModal()" class="btn-close">&times;</button>
+    </div>
+    <div class="error-body">
+      <div class="error-icon-wrap">
+        <i class="fa-solid fa-users-slash"></i>
+      </div>
+      <p class="error-msg">{{ errorModalMessage }}</p>
+    </div>
+    <div class="modal-footer" style="justify-content: center;">
+      <button (click)="closeErrorModal()" class="btn btn-secondary">فهمت، إغلاق</button>
+    </div>
+  </div>
+</div>

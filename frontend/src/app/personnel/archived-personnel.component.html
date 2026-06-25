@@ -1,0 +1,257 @@
+<div class="personnel-wrapper animated-fade">
+  <div class="page-header">
+    <div class="header-title">
+      <h1>أرشيف الموظفين والأعوان</h1>
+      <p>قائمة الأعوان الذين تم تجميد حساباتهم مؤقتاً أو نهائياً</p>
+    </div>
+    <button (click)="fetchArchived()" class="btn btn-secondary">
+      <i class="fa-solid fa-arrows-rotate"></i> تحديث
+    </button>
+  </div>
+
+  <div class="glass-card list-container">
+    <div class="container-header">
+      <h3>ملفات الأعوان المدرجة بالأرشيف</h3>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th (click)="setSort('registrationNumber')" style="cursor: pointer; user-select: none;">
+            المعرف <i [class]="getSortIcon('registrationNumber')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+          </th>
+          <th (click)="setSort('name')" style="cursor: pointer; user-select: none;">
+            الإسم الإداري <i [class]="getSortIcon('name')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+          </th>
+          <th (click)="setSort('grade')" style="cursor: pointer; user-select: none;">
+            الرتبة <i [class]="getSortIcon('grade')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+          </th>
+          <th>الخطة الوظيفية</th>
+          <th>الوضعية الحالية</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of getSortedAndPaginatedArchived()">
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <img [src]="getAvatar(p)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;" alt="Avatar">
+              <strong>{{ p.registrationNumber }}</strong>
+            </div>
+          </td>
+          <td>{{ p.firstNameAr }} {{ p.fatherNameAr }} {{ p.lastNameAr }}</td>
+          <td><span class="badge-grade">{{ p.grade }}</span></td>
+          <td>
+            <span class="badge-post" *ngIf="p.functionalPost">{{ getPostLabel(p.functionalPost) }}</span>
+            <span *ngIf="!p.functionalPost" class="text-muted">—</span>
+          </td>
+          <td>
+            <span *ngIf="p.archiveStatus === 'ARCHIVED'" class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25);">
+              مؤرشف (مغلق)
+            </span>
+            <span *ngIf="p.archiveStatus === 'PENDING_RECOVER'" class="badge badge-pending">
+              طلب استعادة (موافقة المدير)
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button (click)="viewProfile(p)" class="btn-action-view" style="display: inline-flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-address-card"></i> التفاصيل
+              </button>
+
+              <!-- Agent RH: Request reactivation -->
+              <button *ngIf="isAgentRh() && p.archiveStatus === 'ARCHIVED'" 
+                      (click)="requestActive(p)" 
+                      class="btn btn-primary btn-sm" 
+                      style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25); padding: 6px 10px; font-size: 13px;" 
+                      title="طلب استعادة العمل">
+                <i class="fa-solid fa-arrow-rotate-left"></i> طلب استعادة
+              </button>
+
+              <!-- Directeur: Approve/Reject reactivation -->
+              <button *ngIf="isDirecteur() && p.archiveStatus === 'PENDING_RECOVER'" 
+                      (click)="approveActive(p)" 
+                      class="btn btn-success btn-sm" 
+                      style="padding: 6px 10px; font-size: 13px;" 
+                      title="موافقة على الاستعادة">
+                <i class="fa-solid fa-check"></i> موافقة
+              </button>
+              <button *ngIf="isDirecteur() && p.archiveStatus === 'PENDING_RECOVER'" 
+                      (click)="rejectArchiveAction(p)" 
+                      class="btn btn-danger btn-sm" 
+                      style="padding: 6px 10px; font-size: 13px;" 
+                      title="رفض الاستعادة">
+                <i class="fa-solid fa-xmark"></i> رفض
+              </button>
+
+              <!-- Super Admin: Permanent Delete -->
+              <button *ngIf="isSuperAdmin()" 
+                      (click)="deletePersonnel(p)" 
+                      class="btn btn-danger btn-sm" 
+                      style="padding: 6px 10px; font-size: 13px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25);" 
+                      title="حذف نهائي">
+                <i class="fa-solid fa-trash"></i> حذف نهائي
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="archivedList.length === 0">
+          <td colspan="6" class="no-data">لا يوجد ملفات أعوان مدرجة بالأرشيف.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination Section -->
+    <div class="pagination-container" *ngIf="archivedList.length > 0">
+      <div class="pagination-info">
+        <span>عرض {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, archivedList.length) }} من أصل {{ archivedList.length }} موظف مؤرشف</span>
+      </div>
+      
+      <div class="pagination-controls">
+        <button class="btn btn-pagination" [disabled]="currentPage === 1" (click)="changePage(1)" title="الصفحة الأولى">
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+        <button class="btn btn-pagination" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)" title="الصفحة السابقة">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
+        
+        <button *ngFor="let page of getPageNumbers()" 
+                class="btn btn-pagination btn-page-num" 
+                [class.active]="page === currentPage" 
+                (click)="changePage(page)">
+          {{ page }}
+        </button>
+        
+        <button class="btn btn-pagination" [disabled]="currentPage === getTotalPages()" (click)="changePage(currentPage + 1)" title="الصفحة التالية">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <button class="btn btn-pagination" [disabled]="currentPage === getTotalPages()" (click)="changePage(getTotalPages())" title="الصفحة الأخيرة">
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+      </div>
+
+      <div class="pagination-size">
+        <label>الموظفين المدرجين بالأرشيف في الصفحة:</label>
+        <select class="form-control select-page-size" [(ngModel)]="pageSize" (change)="currentPage = 1">
+          <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Fiche Profil (grand modal) -->
+<div class="modal-overlay animated-fade" *ngIf="selectedPersonnel" (click)="selectedPersonnel = null">
+  <div class="modal-card modal-xl glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="profile-header-info">
+        <img [src]="getAvatar(selectedPersonnel)" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); flex-shrink: 0;" alt="Avatar">
+        <div>
+          <h3>{{ selectedPersonnel.firstNameAr }} {{ selectedPersonnel.fatherNameAr }} {{ selectedPersonnel.lastNameAr }}</h3>
+          <span class="profile-reg">معرّف: {{ selectedPersonnel.registrationNumber }} | {{ selectedPersonnel.grade }}</span>
+        </div>
+      </div>
+      <button (click)="selectedPersonnel = null" class="btn-close">&times;</button>
+    </div>
+
+    <div class="profile-tabs">
+      <button (click)="activeTab = 'info'" [class.active]="activeTab === 'info'" class="tab-btn">
+        <i class="fa-solid fa-circle-info"></i> معلومات الملف
+      </button>
+      <button (click)="activeTab = 'children'" [class.active]="activeTab === 'children'" class="tab-btn">
+        <i class="fa-solid fa-child-reaching"></i> الأبناء
+      </button>
+      <button (click)="activeTab = 'stages'" [class.active]="activeTab === 'stages'" class="tab-btn">
+        <i class="fa-solid fa-graduation-cap"></i> التربصات والتكوين
+      </button>
+    </div>
+
+    <div class="profile-tab-content">
+      <!-- Tab Info -->
+      <div *ngIf="activeTab === 'info'" class="tab-pane animated-fade">
+        <div class="info-grid">
+          <div class="info-item"><span class="lbl">الإسم الإداري</span><span class="val">{{ selectedPersonnel.firstNameAr }} {{ selectedPersonnel.fatherNameAr }} {{ selectedPersonnel.lastNameAr }}</span></div>
+          <div class="info-item"><span class="lbl">اسم الأب (عربي)</span><span class="val">{{ selectedPersonnel.fatherNameAr }}</span></div>
+          <div class="info-item"><span class="lbl">تاريخ الولادة</span><span class="val">{{ selectedPersonnel.dateOfBirth }}</span></div>
+          <div class="info-item"><span class="lbl">الرتبة الحالية</span><span class="val">{{ selectedPersonnel.grade }}</span></div>
+          <div class="info-item"><span class="lbl">الخطة الوظيفية</span><span class="val">{{ getPostLabel(selectedPersonnel.functionalPost) }}</span></div>
+          <div class="info-item"><span class="lbl">الجنس (السكس)</span><span class="val">{{ getGenderLabel(selectedPersonnel.gender) }}</span></div>
+          <div class="info-item"><span class="lbl">الحالة الاجتماعية</span><span class="val">{{ getMaritalStatusLabel(selectedPersonnel.maritalStatus) }}</span></div>
+          <div class="info-item"><span class="lbl">رقم الهاتف</span><span class="val">{{ selectedPersonnel.phoneNumber || 'غير متوفر' }}</span></div>
+          <div class="info-item"><span class="lbl">رقم الهاتف الثاني</span><span class="val">{{ selectedPersonnel.phoneNumber2 || 'غير متوفر' }}</span></div>
+          <div class="info-item"><span class="lbl">هاتف طوارئ (أحد الأقارب)</span><span class="val">{{ selectedPersonnel.emergencyPhone || 'غير متوفر' }}</span></div>
+          <div class="info-item"><span class="lbl">الإدارة الفرعية / المصلحة</span><span class="val">{{ selectedPersonnel.organizationalUnitNameAr }}</span></div>
+          <div class="info-item"><span class="lbl">البريد الإلكتروني</span><span class="val">{{ selectedPersonnel.email || 'غير متوفر' }}</span></div>
+          <div class="info-item"><span class="lbl">اسم المستخدم للمنظومة</span><span class="val"><code>{{ selectedPersonnel.username || 'بدون حساب' }}</code></span></div>
+        </div>
+
+        <div class="tab-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+          <!-- Agent RH: Request reactivation -->
+          <button *ngIf="isAgentRh() && selectedPersonnel.archiveStatus === 'ARCHIVED'" 
+                  (click)="requestActive(selectedPersonnel)" 
+                  class="btn btn-success btn-sm" 
+                  style="background: #10b981; border: none; color: #fff;">
+            <i class="fa-solid fa-arrow-rotate-left"></i> طلب استعادة الموظف للعمل
+          </button>
+
+          <!-- Status badge inside modal -->
+          <span *ngIf="selectedPersonnel.archiveStatus === 'PENDING_RECOVER'" class="badge badge-pending" style="font-size: 13px; padding: 6px 12px;">
+            طلب استعادة قيد الانتظار (موافقة المدير مطلوبة)
+          </span>
+
+          <!-- Directeur: Approve/Reject -->
+          <button *ngIf="isDirecteur() && selectedPersonnel.archiveStatus === 'PENDING_RECOVER'" 
+                  (click)="approveActive(selectedPersonnel)" 
+                  class="btn btn-success btn-sm">
+            <i class="fa-solid fa-check"></i> موافقة على الاستعادة
+          </button>
+          <button *ngIf="isDirecteur() && selectedPersonnel.archiveStatus === 'PENDING_RECOVER'" 
+                  (click)="rejectArchiveAction(selectedPersonnel)" 
+                  class="btn btn-danger btn-sm">
+            <i class="fa-solid fa-xmark"></i> رفض الطلب
+          </button>
+
+          <!-- Super Admin: Permanent Delete -->
+          <button *ngIf="isSuperAdmin()" 
+                  (click)="deletePersonnel(selectedPersonnel)" 
+                  class="btn btn-danger btn-sm" 
+                  style="background: #ef4444; border: none; color: #fff; padding: 6px 12px; font-size: 13px;">
+            <i class="fa-solid fa-trash"></i> حذف نهائي
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Children -->
+      <div *ngIf="activeTab === 'children'" class="tab-pane animated-fade">
+        <div class="timeline">
+          <div class="timeline-item" *ngFor="let c of selectedPersonnel.children">
+            <div class="timeline-icon"><i class="fa-solid fa-child"></i></div>
+            <div class="timeline-content">
+              <h4>{{ c.name }}</h4>
+              <span class="timeline-date">تاريخ الولادة: {{ c.birthDate }}</span>
+            </div>
+          </div>
+          <div *ngIf="!selectedPersonnel.children || selectedPersonnel.children.length === 0" class="no-timeline-data">
+            لا يوجد أطفال مسجلون لهذا العون
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Stages -->
+      <div *ngIf="activeTab === 'stages'" class="tab-pane animated-fade">
+        <div class="timeline">
+          <div class="timeline-item" *ngFor="let s of selectedPersonnel.stages">
+            <div class="timeline-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div class="timeline-content">
+              <h4>{{ s.title }}</h4>
+              <span class="timeline-date">المؤسسة: {{ s.institution }} | تاريخ البدء: {{ s.startDate }} | المدة: {{ s.duration }} أشهر</span>
+            </div>
+          </div>
+          <div *ngIf="!selectedPersonnel.stages || selectedPersonnel.stages.length === 0" class="no-timeline-data">
+            لا توجد تربصات مسجلة لهذا العون
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
