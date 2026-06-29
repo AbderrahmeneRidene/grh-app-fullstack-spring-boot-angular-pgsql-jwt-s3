@@ -50,15 +50,24 @@
         </div>
       </div>
 
-      <a routerLink="/my-annual-leaves" routerLinkActive="active" class="nav-item" *ngIf="!isSuperAdmin()">
-        <i class="fa-solid fa-file-signature icon"></i>
-        <span>رخصي السنوية</span>
-      </a>
-
-      <a routerLink="/my-exceptional-leaves" routerLinkActive="active" class="nav-item" *ngIf="!isSuperAdmin()">
-        <i class="fa-solid fa-file-circle-plus icon"></i>
-        <span>رخصي الاستثنائية</span>
-      </a>
+      <div class="nav-dropdown" *ngIf="!isSuperAdmin()">
+        <button type="button" class="nav-item nav-dropdown-toggle" (click)="toggleMyLeavesMenu($event)" [class.active]="isMyLeavesMenuActive()">
+          <i class="fa-solid fa-file-invoice icon"></i>
+          <span>رخصي وإجازاتي</span>
+          <i class="fa-solid fa-chevron-down arrow-icon" [class.open]="isMyLeavesMenuOpen"></i>
+        </button>
+        
+        <div class="nav-dropdown-menu" [class.open]="isMyLeavesMenuOpen">
+          <a routerLink="/my-annual-leaves" routerLinkActive="active" class="nav-sub-item">
+            <i class="fa-solid fa-file-signature sub-icon"></i>
+            <span>رخصي السنوية</span>
+          </a>
+          <a routerLink="/my-exceptional-leaves" routerLinkActive="active" class="nav-sub-item">
+            <i class="fa-solid fa-file-circle-plus sub-icon"></i>
+            <span>رخصي الاستثنائية</span>
+          </a>
+        </div>
+      </div>
 
 
       <a routerLink="/app-settings" routerLinkActive="active" class="nav-item" *ngIf="authService.hasRole('ROLE_SUPER_ADMIN')">

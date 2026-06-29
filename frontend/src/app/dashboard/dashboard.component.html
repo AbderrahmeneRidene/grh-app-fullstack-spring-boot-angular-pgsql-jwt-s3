@@ -1,173 +1,109 @@
 <div class="dashboard-wrapper">
   <div class="animated-fade" style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
-  <div class="welcome-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-    <div>
-      <h1>مرحباً بك في لوحة التحكّم والقيادة</h1>
-      <p>إحصائيات عامة ومؤشرات أداء الموارد البشرية الحالية</p>
-    </div>
-    <button class="btn btn-primary no-print" (click)="openPreview()" style="display: flex; align-items: center; gap: 8px;">
-      <i class="fa-solid fa-file-pdf"></i>
-      <span>تصدير وطباعة البيانات</span>
-    </button>
-  </div>
-
-  <!-- Compteurs principaux -->
-  <div class="stats-grid">
-    <div class="glass-card stat-card border-red">
-      <div class="stat-icon bg-red-dim"><i class="fa-solid fa-users"></i></div>
-      <div class="stat-content">
-        <span class="stat-label">إجمالي الأعوان والإطارات</span>
-        <h2 class="stat-number">{{ stats?.totalPersonnel || 0 }}</h2>
+    <div class="welcome-header"
+      style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div>
+        <h1>مرحباً بك في لوحة التحكّم والقيادة</h1>
+        <p>إحصائيات عامة ومؤشرات أداء الموارد البشرية الحالية</p>
       </div>
+      <button class="btn btn-primary no-print" (click)="openPreview()"
+        style="display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-file-pdf"></i>
+        <span>تصدير وطباعة البيانات</span>
+      </button>
     </div>
 
-    <div class="glass-card stat-card border-blue">
-      <div class="stat-icon bg-blue-dim"><i class="fa-solid fa-sitemap"></i></div>
-      <div class="stat-content">
-        <span class="stat-label">الهياكل والمصالح الإدارية</span>
-        <h2 class="stat-number">{{ stats?.totalUnits || 0 }}</h2>
+    <!-- المؤشرات الهيكلية العامة -->
+    <div class="stats-grid">
+      <div class="glass-card stat-card border-red clickable-card" routerLink="/personnel" style="cursor: pointer;">
+        <div class="stat-icon bg-red-dim"><i class="fa-solid fa-users"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">إجمالي الأعوان والإطارات</span>
+          <h2 class="stat-number">{{ stats?.totalPersonnel || 0 }}</h2>
+        </div>
       </div>
-    </div>
 
-    <div class="glass-card stat-card border-yellow">
-      <div class="stat-icon bg-yellow-dim"><i class="fa-solid fa-plane-arrival"></i></div>
-      <div class="stat-content">
-        <span class="stat-label">الرخص النشطة اليوم</span>
-        <h2 class="stat-number">{{ stats?.activeLeaves || 0 }}</h2>
-      </div>
-    </div>
-
-    <div class="glass-card stat-card border-green">
-      <div class="stat-icon bg-green-dim"><i class="fa-solid fa-award"></i></div>
-      <div class="stat-content">
-        <span class="stat-label">الدورات التكوينية الجارية</span>
-        <h2 class="stat-number">{{ stats?.activeTrainings || 0 }}</h2>
-      </div>
-    </div>
-  </div>
-
-  <!-- Graphiques / Listes détaillées -->
-  <div class="details-grid">
-    <!-- Distribution par structures -->
-    <div class="glass-card detail-box">
-      <div class="box-header">
-        <h3>توزيع الأعوان حسب الهياكل والمصالح</h3>
-        <i class="fa-solid fa-chart-pie header-icon"></i>
-      </div>
-      <div class="box-body">
-        <div *ngIf="!stats?.personnelByOrgUnit" class="no-data">لا توجد بيانات حالية</div>
-        <div class="progress-list" *ngIf="stats?.personnelByOrgUnit">
-          <div class="progress-item" *ngFor="let item of getMapKeys(stats.personnelByOrgUnit)">
-            <div class="item-info">
-              <span class="item-name">{{ item }}</span>
-              <span class="item-val">{{ stats.personnelByOrgUnit[item] }} أعوان</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill bg-blue" [style.width.%]="getProgressPercent(stats.personnelByOrgUnit[item], stats.totalPersonnel)"></div>
-            </div>
-          </div>
+      <div class="glass-card stat-card border-blue clickable-card" routerLink="/organization" style="cursor: pointer;">
+        <div class="stat-icon bg-blue-dim"><i class="fa-solid fa-sitemap"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">الهياكل والمصالح الإدارية</span>
+          <h2 class="stat-number">{{ stats?.totalUnits || 0 }}</h2>
         </div>
       </div>
     </div>
 
-    <!-- Distribution par Catégories de Grades -->
-    <div class="glass-card detail-box" *ngFor="let cat of gradeCategories">
-      <div class="box-header">
-        <h3>{{ cat.label }}</h3>
-        <i class="{{ cat.icon }} header-icon"></i>
+    <!-- مؤشرات الإجازات النشطة اليوم -->
+    <div class="stats-grid active-leaves-counters">
+      <div class="glass-card stat-card border-blue clickable-card" (click)="scrollToSection('active-annual-section')"
+        style="cursor: pointer;">
+        <div class="stat-icon bg-blue-dim"><i class="fa-solid fa-umbrella-beach"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">إجازات سنوية نشطة اليوم</span>
+          <h2 class="stat-number">{{ stats?.activeAnnualLeaves?.length || 0 }}</h2>
+        </div>
       </div>
-      <div class="box-body">
-        <div *ngIf="getGradesForCategory(cat).length === 0" class="no-data">لا توجد بيانات حالية لهذه الفئة</div>
-        <div class="progress-list" *ngIf="getGradesForCategory(cat).length > 0">
-          <div class="progress-item" *ngFor="let item of getGradesForCategory(cat)">
-            <div class="item-info">
-              <span class="item-name">{{ item.name }}</span>
-              <span class="item-val">{{ getGradeCountLabel(item.name, item.count) }}</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill" [ngClass]="cat.color" [style.width.%]="getProgressPercent(item.count, stats.totalPersonnel)"></div>
-            </div>
-          </div>
+
+      <div class="glass-card stat-card border-yellow clickable-card"
+        (click)="scrollToSection('active-exceptional-section')" style="cursor: pointer;">
+        <div class="stat-icon bg-yellow-dim"><i class="fa-solid fa-file-circle-plus"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">رخص استثنائية نشطة اليوم</span>
+          <h2 class="stat-number">{{ stats?.activeExceptionalLeaves?.length || 0 }}</h2>
+        </div>
+      </div>
+
+      <div class="glass-card stat-card border-red clickable-card" (click)="scrollToSection('active-sick-section')"
+        style="cursor: pointer;">
+        <div class="stat-icon bg-red-dim"><i class="fa-solid fa-house-medical"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">إجازات مرضية نشطة اليوم</span>
+          <h2 class="stat-number">{{ stats?.activeSickLeaves?.length || 0 }}</h2>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Graphiques additionnels (Genre & Âge) -->
-  <div class="details-grid" style="margin-top: 30px;">
-    <!-- توزيع الأعوان حسب الفئات الرتبية -->
-    <div class="glass-card detail-box">
-      <div class="box-header">
-        <h3>توزيع الأعوان والإطارات حسب الفئات الرتبية</h3>
-        <i class="fa-solid fa-chart-pie header-icon"></i>
-      </div>
-      <div class="box-body" style="display: flex; align-items: center; justify-content: center;">
-        <div *ngIf="totalOfficersAndAgents === 0" class="no-data">لا توجد بيانات حالية</div>
-        <div class="gender-chart-box" *ngIf="totalOfficersAndAgents > 0" style="width: 100%;">
-          <div class="donut-container">
-            <div class="donut-chart" [style.background]="'conic-gradient(var(--primary) 0% ' + seniorPercent + '%, var(--secondary) ' + seniorPercent + '% ' + (seniorPercent + juniorPercent) + '%, var(--warning) ' + (seniorPercent + juniorPercent) + '% 100%)'">
-              <div class="donut-inner-text">
-                <span class="total-num">{{ totalOfficersAndAgents }}</span>
-                <span class="total-lbl">إطارات وأعوان</span>
+    <!-- Graphiques / Listes détaillées -->
+    <div class="details-grid">
+      <!-- Distribution par structures -->
+      <div class="glass-card detail-box">
+        <div class="box-header">
+          <h3>توزيع الأعوان حسب الهياكل والمصالح</h3>
+          <i class="fa-solid fa-chart-pie header-icon"></i>
+        </div>
+        <div class="box-body">
+          <div *ngIf="!stats?.personnelByOrgUnit" class="no-data">لا توجد بيانات حالية</div>
+          <div class="progress-list" *ngIf="stats?.personnelByOrgUnit">
+            <div class="progress-item" *ngFor="let item of getMapKeys(stats.personnelByOrgUnit)">
+              <div class="item-info">
+                <span class="item-name">{{ item }}</span>
+                <span class="item-val">{{ stats.personnelByOrgUnit[item] }} أعوان</span>
               </div>
-            </div>
-          </div>
-          <div class="gender-legend">
-            <div class="legend-item">
-              <div class="legend-dot female" style="background: var(--primary); box-shadow: 0 0 8px var(--primary);"></div>
-              <div class="legend-info">
-                <span class="legend-name">ضباط سامون</span>
-                <span class="legend-val">{{ seniorCount }} عون ({{ seniorPercent }}%)</span>
-              </div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-dot male" style="background: var(--secondary); box-shadow: 0 0 8px var(--secondary);"></div>
-              <div class="legend-info">
-                <span class="legend-name">ضباط أعوان</span>
-                <span class="legend-val">{{ juniorCount }} عون ({{ juniorPercent }}%)</span>
-              </div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-dot" style="background: var(--warning); box-shadow: 0 0 8px var(--warning); width: 12px; height: 12px; border-radius: 50%;"></div>
-              <div class="legend-info">
-                <span class="legend-name">أعوان</span>
-                <span class="legend-val">{{ agentsCount }} عون ({{ agentsPercent }}%)</span>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill bg-blue"
+                  [style.width.%]="getProgressPercent(stats.personnelByOrgUnit[item], stats.totalPersonnel)"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <!-- Distribution par genre -->
-    <div class="glass-card detail-box">
-      <div class="box-header">
-        <h3>توزيع الأعوان والإطارات حسب الجنس</h3>
-        <i class="fa-solid fa-venus-mars header-icon"></i>
-      </div>
-      <div class="box-body" style="display: flex; align-items: center; justify-content: center;">
-        <div *ngIf="malePercent === 0 && femalePercent === 0" class="no-data">لا توجد بيانات حالية</div>
-        <div class="gender-chart-box" *ngIf="malePercent > 0 || femalePercent > 0" style="width: 100%;">
-          <div class="donut-container">
-            <div class="donut-chart" [style.background]="'conic-gradient(var(--secondary) 0% ' + malePercent + '%, var(--primary) ' + malePercent + '% 100%)'">
-              <div class="donut-inner-text">
-                <span class="total-num">{{ (stats?.activeMaleCount || 0) + (stats?.activeFemaleCount || 0) }}</span>
-                <span class="total-lbl">إطارات وأعوان</span>
+
+      <!-- Distribution par Catégories de Grades -->
+      <div class="glass-card detail-box" *ngFor="let cat of gradeCategories">
+        <div class="box-header">
+          <h3>{{ cat.label }}</h3>
+          <i class="{{ cat.icon }} header-icon"></i>
+        </div>
+        <div class="box-body">
+          <div *ngIf="getGradesForCategory(cat).length === 0" class="no-data">لا توجد بيانات حالية لهذه الفئة</div>
+          <div class="progress-list" *ngIf="getGradesForCategory(cat).length > 0">
+            <div class="progress-item" *ngFor="let item of getGradesForCategory(cat)">
+              <div class="item-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-val">{{ getGradeCountLabel(item.name, item.count) }}</span>
               </div>
-            </div>
-          </div>
-          <div class="gender-legend">
-            <div class="legend-item">
-              <div class="legend-dot male"></div>
-              <div class="legend-info">
-                <span class="legend-name">ذكور</span>
-                <span class="legend-val">{{ stats?.activeMaleCount }} عون ({{ malePercent }}%)</span>
-              </div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-dot female"></div>
-              <div class="legend-info">
-                <span class="legend-name">إناث</span>
-                <span class="legend-val">{{ stats?.activeFemaleCount }} عون ({{ femalePercent }}%)</span>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" [ngClass]="cat.color"
+                  [style.width.%]="getProgressPercent(item.count, stats.totalPersonnel)"></div>
               </div>
             </div>
           </div>
@@ -175,368 +111,603 @@
       </div>
     </div>
 
-    <!-- Distribution par tranches d'âge -->
-    <div class="glass-card detail-box">
-      <div class="box-header">
-        <h3>توزيع الأعوان النشطين حسب الفئات العمرية</h3>
-        <i class="fa-solid fa-cake-candles header-icon"></i>
-      </div>
-      <div class="box-body">
-        <div *ngIf="ageGroups.length === 0" class="no-data">لا توجد بيانات حالية</div>
-        <div class="age-distribution-list" *ngIf="ageGroups.length > 0">
-          <div class="age-bar-item" *ngFor="let g of ageGroups">
-            <div class="age-label-row">
-              <span class="age-range">الفئة {{ g.label }} سنة</span>
-              <span class="age-count">{{ g.count }} أعوان ({{ g.percent }}%)</span>
+    <!-- Graphiques additionnels (Genre & Âge) -->
+    <div class="details-grid" style="margin-top: 30px;">
+      <!-- توزيع الأعوان حسب الفئات الرتبية -->
+      <div class="glass-card detail-box">
+        <div class="box-header">
+          <h3>توزيع الأعوان والإطارات حسب الفئات الرتبية</h3>
+          <i class="fa-solid fa-chart-pie header-icon"></i>
+        </div>
+        <div class="box-body" style="display: flex; align-items: center; justify-content: center;">
+          <div *ngIf="totalOfficersAndAgents === 0" class="no-data">لا توجد بيانات حالية</div>
+          <div class="gender-chart-box" *ngIf="totalOfficersAndAgents > 0" style="width: 100%;">
+            <div class="donut-container">
+              <div class="donut-chart"
+                [style.background]="'conic-gradient(var(--primary) 0% ' + seniorPercent + '%, var(--secondary) ' + seniorPercent + '% ' + (seniorPercent + juniorPercent) + '%, var(--warning) ' + (seniorPercent + juniorPercent) + '% 100%)'">
+                <div class="donut-inner-text">
+                  <span class="total-num">{{ totalOfficersAndAgents }}</span>
+                  <span class="total-lbl">إطارات وأعوان</span>
+                </div>
+              </div>
             </div>
-            <div class="age-bar-bg">
-              <div class="age-bar-fill" [style.width.%]="g.percent"></div>
+            <div class="gender-legend">
+              <div class="legend-item">
+                <div class="legend-dot female" style="background: var(--primary); box-shadow: 0 0 8px var(--primary);">
+                </div>
+                <div class="legend-info">
+                  <span class="legend-name">ضباط سامون</span>
+                  <span class="legend-val">{{ seniorCount }} عون ({{ seniorPercent }}%)</span>
+                </div>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot male"
+                  style="background: var(--secondary); box-shadow: 0 0 8px var(--secondary);"></div>
+                <div class="legend-info">
+                  <span class="legend-name">ضباط أعوان</span>
+                  <span class="legend-val">{{ juniorCount }} عون ({{ juniorPercent }}%)</span>
+                </div>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot"
+                  style="background: var(--warning); box-shadow: 0 0 8px var(--warning); width: 12px; height: 12px; border-radius: 50%;">
+                </div>
+                <div class="legend-info">
+                  <span class="legend-name">أعوان</span>
+                  <span class="legend-val">{{ agentsCount }} عون ({{ agentsPercent }}%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Distribution par genre -->
+      <div class="glass-card detail-box">
+        <div class="box-header">
+          <h3>توزيع الأعوان والإطارات حسب الجنس</h3>
+          <i class="fa-solid fa-venus-mars header-icon"></i>
+        </div>
+        <div class="box-body" style="display: flex; align-items: center; justify-content: center;">
+          <div *ngIf="malePercent === 0 && femalePercent === 0" class="no-data">لا توجد بيانات حالية</div>
+          <div class="gender-chart-box" *ngIf="malePercent > 0 || femalePercent > 0" style="width: 100%;">
+            <div class="donut-container">
+              <div class="donut-chart"
+                [style.background]="'conic-gradient(var(--secondary) 0% ' + malePercent + '%, var(--primary) ' + malePercent + '% 100%)'">
+                <div class="donut-inner-text">
+                  <span class="total-num">{{ (stats?.activeMaleCount || 0) + (stats?.activeFemaleCount || 0) }}</span>
+                  <span class="total-lbl">إطارات وأعوان</span>
+                </div>
+              </div>
+            </div>
+            <div class="gender-legend">
+              <div class="legend-item">
+                <div class="legend-dot male"></div>
+                <div class="legend-info">
+                  <span class="legend-name">ذكور</span>
+                  <span class="legend-val">{{ stats?.activeMaleCount }} عون ({{ malePercent }}%)</span>
+                </div>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot female"></div>
+                <div class="legend-info">
+                  <span class="legend-name">إناث</span>
+                  <span class="legend-val">{{ stats?.activeFemaleCount }} عون ({{ femalePercent }}%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distribution par tranches d'âge -->
+      <div class="glass-card detail-box">
+        <div class="box-header">
+          <h3>توزيع الأعوان النشطين حسب الفئات العمرية</h3>
+          <i class="fa-solid fa-cake-candles header-icon"></i>
+        </div>
+        <div class="box-body">
+          <div *ngIf="ageGroups.length === 0" class="no-data">لا توجد بيانات حالية</div>
+          <div class="age-distribution-list" *ngIf="ageGroups.length > 0">
+            <div class="age-bar-item" *ngFor="let g of ageGroups">
+              <div class="age-label-row">
+                <span class="age-range">الفئة {{ g.label }} سنة</span>
+                <span class="age-count">{{ g.count }} أعوان ({{ g.percent }}%)</span>
+              </div>
+              <div class="age-bar-bg">
+                <div class="age-bar-fill" [style.width.%]="g.percent"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- الأعوان في عطلة سنوية حاليا -->
-  <div class="glass-card" style="margin-top: 30px; padding: 24px;">
-    <div class="box-header" style="margin-bottom: 15px;">
-      <h3><i class="fa-solid fa-umbrella-beach" style="margin-left: 8px; color: var(--secondary);"></i>الأعوان في عطلة سنوية حالياً</h3>
-      <span class="badge-duration" style="background: rgba(37, 99, 235, 0.15); color: var(--secondary);">{{ stats?.activeAnnualLeaves?.length || 0 }} عون</span>
-    </div>
-    <div class="table-box">
-      <div *ngIf="!stats?.activeAnnualLeaves || stats.activeAnnualLeaves.length === 0" class="no-data" style="padding: 20px 0;">
-        لا يوجد أعوان في عطلة سنوية حالياً
+    <!-- الأعوان في عطلة سنوية حاليا -->
+    <div id="active-annual-section" class="glass-card" style="margin-top: 30px; padding: 24px;">
+      <div class="box-header" style="margin-bottom: 15px;">
+        <h3><i class="fa-solid fa-umbrella-beach" style="margin-left: 8px; color: var(--secondary);"></i>الأعوان في عطلة
+          سنوية حالياً</h3>
+        <span class="badge-duration" style="background: rgba(37, 99, 235, 0.15); color: var(--secondary);">{{
+          stats?.activeAnnualLeaves?.length || 0 }} عون</span>
       </div>
-      <table class="data-table" *ngIf="stats?.activeAnnualLeaves && stats.activeAnnualLeaves.length > 0">
-        <thead>
-          <tr>
-            <th>المعرف</th>
-            <th style="text-align: center;">الصورة</th>
-            <th>الاسم واللقب</th>
-            <th>المصلحة</th>
-            <th>تاريخ بداية العطلة</th>
-            <th style="text-align: center;">المدة</th>
-            <th>تاريخ استئناف العمل</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let leave of stats.activeAnnualLeaves">
-            <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
-            <td style="text-align: center;">
-              <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" alt="Avatar">
-            </td>
-            <td style="font-weight: 600;">
-              {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
-            </td>
-            <td>{{ leave.personnelOrgUnitNameAr }}</td>
-            <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-            <td style="text-align: center;"><span class="badge-duration">{{ leave.duration }} يوم</span></td>
-            <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-box">
+        <div *ngIf="!stats?.activeAnnualLeaves || stats.activeAnnualLeaves.length === 0" class="no-data"
+          style="padding: 20px 0;">
+          لا يوجد أعوان في عطلة سنوية حالياً
+        </div>
+        <table class="data-table" *ngIf="stats?.activeAnnualLeaves && stats.activeAnnualLeaves.length > 0">
+          <thead>
+            <tr>
+              <th>المعرف</th>
+              <th style="text-align: center;">الصورة</th>
+              <th>الاسم واللقب</th>
+              <th>المصلحة</th>
+              <th>تاريخ بداية العطلة</th>
+              <th style="text-align: center;">المدة</th>
+              <th>تاريخ استئناف العمل</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let leave of stats.activeAnnualLeaves">
+              <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
+              <td style="text-align: center;">
+                <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable"
+                  style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;"
+                  alt="Avatar">
+              </td>
+              <td style="font-weight: 600;">
+                {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
+                  leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+              </td>
+              <td>{{ leave.personnelOrgUnitNameAr }}</td>
+              <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+              <td style="text-align: center;"><span class="badge-duration">{{ leave.duration }} يوم</span></td>
+              <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <!-- الأعوان في عطلة مرضية حاليا -->
-  <div class="glass-card" style="margin-top: 30px; padding: 24px;">
-    <div class="box-header" style="margin-bottom: 15px;">
-      <h3><i class="fa-solid fa-house-medical" style="margin-left: 8px; color: var(--primary);"></i>الأعوان في عطلة مرضية حالياً</h3>
-      <span class="badge-duration" style="background: rgba(220, 38, 38, 0.15); color: var(--primary);">{{ stats?.activeSickLeaves?.length || 0 }} عون</span>
-    </div>
-    <div class="table-box">
-      <div *ngIf="!stats?.activeSickLeaves || stats.activeSickLeaves.length === 0" class="no-data" style="padding: 20px 0;">
-        لا يوجد أعوان في عطلة مرضية حالياً
+    <!-- الأعوان في رخصة استثنائية حاليا -->
+    <div id="active-exceptional-section" class="glass-card" style="margin-top: 30px; padding: 24px;">
+      <div class="box-header" style="margin-bottom: 15px;">
+        <h3><i class="fa-solid fa-file-circle-plus" style="margin-left: 8px; color: var(--warning);"></i>الأعوان في رخصة
+          استثنائية حالياً</h3>
+        <span class="badge-duration" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">{{
+          stats?.activeExceptionalLeaves?.length || 0 }} عون</span>
       </div>
-      <table class="data-table" *ngIf="stats?.activeSickLeaves && stats.activeSickLeaves.length > 0">
-        <thead>
-          <tr>
-            <th>المعرف</th>
-            <th style="text-align: center;">الصورة</th>
-            <th>الاسم واللقب</th>
-            <th>المصلحة</th>
-            <th>تاريخ بداية العطلة</th>
-            <th style="text-align: center;">المدة</th>
-            <th>تاريخ استئناف العمل</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let leave of stats.activeSickLeaves">
-            <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
-            <td style="text-align: center;">
-              <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" alt="Avatar">
-            </td>
-            <td style="font-weight: 600;">
-              {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
-            </td>
-            <td>{{ leave.personnelOrgUnitNameAr }}</td>
-            <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-            <td style="text-align: center;"><span class="badge-duration" style="background: rgba(220,38,38,0.15); color: var(--primary);">{{ leave.duration }} يوم</span></td>
-            <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-box">
+        <div *ngIf="!stats?.activeExceptionalLeaves || stats.activeExceptionalLeaves.length === 0" class="no-data"
+          style="padding: 20px 0;">
+          لا يوجد أعوان في رخصة استثنائية حالياً
+        </div>
+        <table class="data-table" *ngIf="stats?.activeExceptionalLeaves && stats.activeExceptionalLeaves.length > 0">
+          <thead>
+            <tr>
+              <th>المعرف</th>
+              <th style="text-align: center;">الصورة</th>
+              <th>الاسم واللقب</th>
+              <th>المصلحة</th>
+              <th>تاريخ بداية الرخصة</th>
+              <th style="text-align: center;">المدة</th>
+              <th>تاريخ استئناف العمل</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let leave of stats.activeExceptionalLeaves">
+              <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
+              <td style="text-align: center;">
+                <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable"
+                  style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;"
+                  alt="Avatar">
+              </td>
+              <td style="font-weight: 600;">
+                {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
+                  leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+              </td>
+              <td>{{ leave.personnelOrgUnitNameAr }}</td>
+              <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+              <td style="text-align: center;"><span class="badge-duration"
+                  style="background: rgba(245,158,11,0.15); color: var(--warning);">{{ leave.duration }} يوم</span></td>
+              <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+
+    <!-- الأعوان في عطلة مرضية حاليا -->
+    <div id="active-sick-section" class="glass-card" style="margin-top: 30px; padding: 24px;">
+      <div class="box-header" style="margin-bottom: 15px;">
+        <h3><i class="fa-solid fa-house-medical" style="margin-left: 8px; color: var(--primary);"></i>الأعوان في عطلة
+          مرضية حالياً</h3>
+        <span class="badge-duration" style="background: rgba(220, 38, 38, 0.15); color: var(--primary);">{{
+          stats?.activeSickLeaves?.length || 0 }} عون</span>
+      </div>
+      <div class="table-box">
+        <div *ngIf="!stats?.activeSickLeaves || stats.activeSickLeaves.length === 0" class="no-data"
+          style="padding: 20px 0;">
+          لا يوجد أعوان في عطلة مرضية حالياً
+        </div>
+        <table class="data-table" *ngIf="stats?.activeSickLeaves && stats.activeSickLeaves.length > 0">
+          <thead>
+            <tr>
+              <th>المعرف</th>
+              <th style="text-align: center;">الصورة</th>
+              <th>الاسم واللقب</th>
+              <th>المصلحة</th>
+              <th>تاريخ بداية العطلة</th>
+              <th style="text-align: center;">المدة</th>
+              <th>تاريخ استئناف العمل</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let leave of stats.activeSickLeaves">
+              <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
+              <td style="text-align: center;">
+                <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable"
+                  style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;"
+                  alt="Avatar">
+              </td>
+              <td style="font-weight: 600;">
+                {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
+                  leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+              </td>
+              <td>{{ leave.personnelOrgUnitNameAr }}</td>
+              <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+              <td style="text-align: center;"><span class="badge-duration"
+                  style="background: rgba(220,38,38,0.15); color: var(--primary);">{{ leave.duration }} يوم</span></td>
+              <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de prévisualisation d'image -->
-  <div class="modal-overlay image-preview-overlay animated-fade" *ngIf="isImagePreviewModalOpen" (click)="closeImagePreview()">
+  <div class="modal-overlay image-preview-overlay animated-fade" *ngIf="isImagePreviewModalOpen"
+    (click)="closeImagePreview()">
     <div class="modal-card image-preview-card glass-card" (click)="$event.stopPropagation()">
       <button (click)="closeImagePreview()" class="btn-close image-preview-close">&times;</button>
       <div class="image-preview-content">
         <img [src]="getAvatar(imagePreviewPersonnel)" class="image-preview-full" alt="صورة الملف الشخصي">
         <div class="image-preview-info">
-          <h3>{{ imagePreviewPersonnel?.personnelFirstNameAr }} <span *ngIf="imagePreviewPersonnel?.personnelFatherNameAr">{{ imagePreviewPersonnel?.personnelFatherNameAr }} </span>{{ imagePreviewPersonnel?.personnelLastNameAr }}</h3>
+          <h3>{{ imagePreviewPersonnel?.personnelFirstNameAr }} <span
+              *ngIf="imagePreviewPersonnel?.personnelFatherNameAr">{{ imagePreviewPersonnel?.personnelFatherNameAr }}
+            </span>{{ imagePreviewPersonnel?.personnelLastNameAr }}</h3>
           <p>{{ imagePreviewPersonnel?.personnelRegistrationNumber }} - {{ imagePreviewPersonnel?.personnelGrade }}</p>
         </div>
       </div>
     </div>
   </div>
 
-<!-- ====== Modal: Aperçu avant impression / Export PDF ====== -->
-<div class="modal-overlay animated-fade" *ngIf="isPreviewModalOpen" (click)="closePreview()">
-  <div class="modal-card print-preview-modal-card glass-card" (click)="$event.stopPropagation()" style="max-width: 900px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
-    <div class="modal-header">
-      <h3><i class="fa-solid fa-file-pdf"></i> معاينة وثيقة التقرير قبل الطباعة والتصدير</h3>
-      <button (click)="closePreview()" class="btn-close">&times;</button>
-    </div>
+  <!-- ====== Modal: Aperçu avant impression / Export PDF ====== -->
+  <div class="modal-overlay animated-fade" *ngIf="isPreviewModalOpen" (click)="closePreview()">
+    <div class="modal-card print-preview-modal-card glass-card" (click)="$event.stopPropagation()"
+      style="max-width: 900px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-pdf"></i> معاينة وثيقة التقرير قبل الطباعة والتصدير</h3>
+        <button (click)="closePreview()" class="btn-close">&times;</button>
+      </div>
 
-    <!-- Scrollable container for preview -->
-    <div class="box-body" style="flex: 1; padding: 20px; overflow-y: auto; background: #f0f2f5;">
-      <!-- A4 Document Simulation Wrapper -->
-      <div id="print-preview-document" style="background: white; color: black; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 4px; font-family: 'Cairo', 'Inter', sans-serif; direction: rtl; width: 100%; box-sizing: border-box;">
-        
-        <!-- Header Officiel Tunisien -->
-        <div style="display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px;">
-          <div style="text-align: right; font-size: 12px; line-height: 1.6; font-weight: bold;">
-            الجمهورية التونسية<br>
-            وزارة الداخلية<br>
-            كتابة الدولة للأمن<br>
-            الإدارة العامة للأمن الوطني<br>
-            الإدارة العامة للتكوين<br>
-            {{ authService.getAppNameAr() }}
+      <!-- Scrollable container for preview -->
+      <div class="box-body" style="flex: 1; padding: 20px; overflow-y: auto; background: #f0f2f5;">
+        <!-- A4 Document Simulation Wrapper -->
+        <div id="print-preview-document"
+          style="background: white; color: black; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 4px; font-family: 'Cairo', 'Inter', sans-serif; direction: rtl; width: 100%; box-sizing: border-box;">
+
+          <!-- Header Officiel Tunisien -->
+          <div
+            style="display: flex; justify-content: space-between; align-items: start; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px;">
+            <div style="text-align: right; font-size: 12px; line-height: 1.6; font-weight: bold;">
+              الجمهورية التونسية<br>
+              وزارة الداخلية<br>
+              كتابة الدولة للأمن<br>
+              الإدارة العامة للأمن الوطني<br>
+              الإدارة العامة للتكوين<br>
+              {{ authService.getAppNameAr() }}
+            </div>
+            <div style="text-align: center;">
+              <img [src]="authService.getAppLogo()" style="width: 70px; height: auto;" alt="Logo">
+            </div>
+            <div style="text-align: left; font-size: 11px; font-weight: bold; color: #555;">
+              تاريخ الاستخراج:<br>
+              {{ getFormattedDate() }}
+            </div>
           </div>
-          <div style="text-align: center;">
-            <img [src]="authService.getAppLogo()" style="width: 70px; height: auto;" alt="Logo">
+
+          <!-- Document Title -->
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h2
+              style="font-size: 20px; font-weight: 800; border: 1.5px solid #000; display: inline-block; padding: 10px 30px; border-radius: 4px; background-color: #f8f9fa;">
+              تقرير إحصائيات لوحة القيادة العامة للموظفين
+            </h2>
           </div>
-          <div style="text-align: left; font-size: 11px; font-weight: bold; color: #555;">
-            تاريخ الاستخراج:<br>
-            {{ getFormattedDate() }}
+
+          <!-- 1. Indicateurs Globaux -->
+          <div style="margin-bottom: 25px;">
+            <h4
+              style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+              أولاً: المؤشرات العامة</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 13px;">
+              <thead>
+                <tr style="background-color: #f1f5f9;">
+                  <th style="border: 1px solid #cbd5e1; padding: 8px;">إجمالي الأعوان والإطارات</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 8px;">الهياكل والمصالح الإدارية</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 8px;">إجازات سنوية نشطة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 8px;">رخص استثنائية نشطة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 8px;">إجازات مرضية نشطة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{ stats?.totalPersonnel || 0
+                    }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{ stats?.totalUnits || 0 }}
+                  </td>
+                  <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{
+                    stats?.activeAnnualLeaves?.length || 0 }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{
+                    stats?.activeExceptionalLeaves?.length || 0 }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{
+                    stats?.activeSickLeaves?.length || 0 }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
 
-        <!-- Document Title -->
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h2 style="font-size: 20px; font-weight: 800; border: 1.5px solid #000; display: inline-block; padding: 10px 30px; border-radius: 4px; background-color: #f8f9fa;">
-            تقرير إحصائيات لوحة القيادة العامة للموظفين
-          </h2>
-        </div>
-
-        <!-- 1. Indicateurs Globaux -->
-        <div style="margin-bottom: 25px;">
-          <h4 style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">أولاً: المؤشرات العامة</h4>
-          <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 13px;">
-            <thead>
-              <tr style="background-color: #f1f5f9;">
-                <th style="border: 1px solid #cbd5e1; padding: 8px;">إجمالي الأعوان والإطارات</th>
-                <th style="border: 1px solid #cbd5e1; padding: 8px;">الهياكل والمصالح الإدارية</th>
-                <th style="border: 1px solid #cbd5e1; padding: 8px;">الرخص النشطة اليوم</th>
-                <th style="border: 1px solid #cbd5e1; padding: 8px;">الدورات التكوينية الجارية</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{ stats?.totalPersonnel || 0 }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{ stats?.totalUnits || 0 }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{ stats?.activeLeaves || 0 }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: bold;">{{ stats?.activeTrainings || 0 }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 2. Structures Distribution -->
-        <div style="margin-bottom: 25px;">
-          <h4 style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">ثانياً: توزيع الأعوان حسب الهياكل والمصالح</h4>
-          <table style="width: 100%; border-collapse: collapse; text-align: right; font-size: 12px;">
-            <thead>
-              <tr style="background-color: #f1f5f9;">
-                <th style="border: 1px solid #cbd5e1; padding: 8px; width: 60%;">المصلحة / الهيكل الإداري</th>
-                <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">العدد الإجمالي للموظفين</th>
-                <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">النسبة المئوية</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of getMapKeys(stats?.personnelByOrgUnit)">
-                <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ item }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">{{ stats.personnelByOrgUnit[item] }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">{{ getProgressPercent(stats.personnelByOrgUnit[item], stats.totalPersonnel) }}%</td>
-              </tr>
-              <tr *ngIf="!stats?.personnelByOrgUnit">
-                <td colspan="3" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">لا توجد بيانات حالية</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 3. Grades Distribution by Category -->
-        <div style="margin-bottom: 25px;">
-          <h4 style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">ثالثاً: تفصيل التعداد حسب الرتب والأسلاك</h4>
-          
-          <div *ngFor="let cat of gradeCategories" style="margin-bottom: 15px;">
-            <h5 style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #334155;">{{ cat.label }} :</h5>
+          <!-- 2. Structures Distribution -->
+          <div style="margin-bottom: 25px;">
+            <h4
+              style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+              ثانياً: توزيع الأعوان حسب الهياكل والمصالح</h4>
             <table style="width: 100%; border-collapse: collapse; text-align: right; font-size: 12px;">
               <thead>
-                <tr style="background-color: #f8fafc;">
-                  <th style="border: 1px solid #e2e8f0; padding: 6px; width: 60%;">الرتبة</th>
-                  <th style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">التعداد والتصنيف</th>
+                <tr style="background-color: #f1f5f9;">
+                  <th style="border: 1px solid #cbd5e1; padding: 8px; width: 60%;">المصلحة / الهيكل الإداري</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">العدد الإجمالي للموظفين</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">النسبة المئوية</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let item of getGradesForCategory(cat)">
-                  <td style="border: 1px solid #e2e8f0; padding: 6px;">{{ item.name }}</td>
-                  <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center; font-weight: bold;">{{ getGradeCountLabel(item.name, item.count) }}</td>
+                <tr *ngFor="let item of getMapKeys(stats?.personnelByOrgUnit)">
+                  <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ item }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">{{
+                    stats.personnelByOrgUnit[item] }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">{{
+                    getProgressPercent(stats.personnelByOrgUnit[item], stats.totalPersonnel) }}%</td>
                 </tr>
-                <tr *ngIf="getGradesForCategory(cat).length === 0">
-                  <td colspan="2" style="border: 1px solid #e2e8f0; padding: 6px; text-align: center; color: #94a3b8;">لا توجد رتب نشطة في هذا السلك حالياً</td>
+                <tr *ngIf="!stats?.personnelByOrgUnit">
+                  <td colspan="3" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">لا توجد بيانات
+                    حالية</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
 
-        <!-- 4. Demographic Statistics -->
-        <div style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          <!-- Genre -->
-          <div>
-            <h4 style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">رابعاً: التوزيع حسب الجنس</h4>
-            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12px;">
+          <!-- 3. Grades Distribution by Category -->
+          <div style="margin-bottom: 25px;">
+            <h4
+              style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+              ثالثاً: تفصيل التعداد حسب الرتب والأسلاك</h4>
+
+            <div *ngFor="let cat of gradeCategories" style="margin-bottom: 15px;">
+              <h5 style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #334155;">{{ cat.label }} :</h5>
+              <table style="width: 100%; border-collapse: collapse; text-align: right; font-size: 12px;">
+                <thead>
+                  <tr style="background-color: #f8fafc;">
+                    <th style="border: 1px solid #e2e8f0; padding: 6px; width: 60%;">الرتبة</th>
+                    <th style="border: 1px solid #e2e8f0; padding: 6px; text-align: center;">التعداد والتصنيف</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of getGradesForCategory(cat)">
+                    <td style="border: 1px solid #e2e8f0; padding: 6px;">{{ item.name }}</td>
+                    <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: center; font-weight: bold;">{{
+                      getGradeCountLabel(item.name, item.count) }}</td>
+                  </tr>
+                  <tr *ngIf="getGradesForCategory(cat).length === 0">
+                    <td colspan="2"
+                      style="border: 1px solid #e2e8f0; padding: 6px; text-align: center; color: #94a3b8;">لا توجد رتب
+                      نشطة في هذا السلك حالياً</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 4. Demographic Statistics -->
+          <div style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Genre -->
+            <div>
+              <h4
+                style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+                رابعاً: التوزيع حسب الجنس</h4>
+              <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12px;">
+                <thead>
+                  <tr style="background-color: #f1f5f9;">
+                    <th style="border: 1px solid #cbd5e1; padding: 8px;">الفئة</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px;">العدد</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px;">النسبة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">ذكور</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ stats?.activeMaleCount ||
+                      0 }}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ malePercent }}%</td>
+                  </tr>
+                  <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">إناث</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ stats?.activeFemaleCount
+                      || 0 }}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ femalePercent }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Age Groups -->
+            <div>
+              <h4
+                style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+                خامساً: التوزيع حسب الفئات العمرية</h4>
+              <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12px;">
+                <thead>
+                  <tr style="background-color: #f1f5f9;">
+                    <th style="border: 1px solid #cbd5e1; padding: 8px;">الفئة العمرية</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px;">التعداد</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px;">النسبة المئوية</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let g of ageGroups">
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">الفئة {{ g.label }} سنة</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ g.count }}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ g.percent }}%</td>
+                  </tr>
+                  <tr *ngIf="ageGroups.length === 0">
+                    <td colspan="3" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">لا توجد بيانات
+                      حالية</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 6. Active Annual Leaves -->
+          <div style="margin-top: 25px; margin-bottom: 25px;">
+            <h4
+              style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+              سادساً: الأعوان في عطلة سنوية حالياً</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 11px;">
               <thead>
                 <tr style="background-color: #f1f5f9;">
-                  <th style="border: 1px solid #cbd5e1; padding: 8px;">الفئة</th>
-                  <th style="border: 1px solid #cbd5e1; padding: 8px;">العدد</th>
-                  <th style="border: 1px solid #cbd5e1; padding: 8px;">النسبة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المعرف</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">الاسم واللقب</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المصلحة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ بداية العطلة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المدة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ استئناف العمل</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px;">ذكور</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ stats?.activeMaleCount || 0 }}</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ malePercent }}%</td>
+                <tr *ngFor="let leave of stats?.activeAnnualLeaves">
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">{{
+                    leave.personnelRegistrationNumber }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
+                    {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
+                      leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+                  </td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.personnelOrgUnitNameAr }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.duration }} يوم</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #15803d;">{{
+                    leave.returnDate | date:'dd/MM/yyyy' }}</td>
                 </tr>
-                <tr>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px;">إناث</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ stats?.activeFemaleCount || 0 }}</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ femalePercent }}%</td>
+                <tr *ngIf="!stats?.activeAnnualLeaves || stats.activeAnnualLeaves.length === 0">
+                  <td colspan="6" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; color: #64748b;">
+                    لا يوجد أعوان في عطلة سنوية حالياً</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- Age Groups -->
-          <div>
-            <h4 style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">خامساً: التوزيع حسب الفئات العمرية</h4>
-            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12px;">
+          <!-- 7. Active Exceptional Leaves -->
+          <div style="margin-bottom: 25px;">
+            <h4
+              style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+              سابعاً: الأعوان في رخصة استثنائية حالياً</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 11px;">
               <thead>
                 <tr style="background-color: #f1f5f9;">
-                  <th style="border: 1px solid #cbd5e1; padding: 8px;">الفئة العمرية</th>
-                  <th style="border: 1px solid #cbd5e1; padding: 8px;">التعداد</th>
-                  <th style="border: 1px solid #cbd5e1; padding: 8px;">النسبة المئوية</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المعرف</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">الاسم واللقب</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المصلحة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ بداية الرخصة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المدة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ استئناف العمل</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let g of ageGroups">
-                  <td style="border: 1px solid #cbd5e1; padding: 8px;">الفئة {{ g.label }} سنة</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ g.count }}</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">{{ g.percent }}%</td>
+                <tr *ngFor="let leave of stats?.activeExceptionalLeaves">
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">{{
+                    leave.personnelRegistrationNumber }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
+                    {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
+                      leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+                  </td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.personnelOrgUnitNameAr }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.duration }} يوم</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #15803d;">{{
+                    leave.returnDate | date:'dd/MM/yyyy' }}</td>
                 </tr>
-                <tr *ngIf="ageGroups.length === 0">
-                  <td colspan="3" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">لا توجد بيانات حالية</td>
+                <tr *ngIf="!stats?.activeExceptionalLeaves || stats.activeExceptionalLeaves.length === 0">
+                  <td colspan="6" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; color: #64748b;">
+                    لا يوجد أعوان في رخصة استثنائية حالياً</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
 
-        <!-- 6. Active Annual Leaves -->
-        <div style="margin-top: 25px; margin-bottom: 25px;">
-          <h4 style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">سادساً: الأعوان في عطلة سنوية حالياً</h4>
-          <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 11px;">
-            <thead>
-              <tr style="background-color: #f1f5f9;">
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">المعرف</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">الاسم واللقب</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">المصلحة</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ بداية العطلة</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">المدة</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ استئناف العمل</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let leave of stats?.activeAnnualLeaves">
-                <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">{{ leave.personnelRegistrationNumber }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
-                  {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
-                </td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.personnelOrgUnitNameAr }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.duration }} يوم</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #15803d;">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
-              </tr>
-              <tr *ngIf="!stats?.activeAnnualLeaves || stats.activeAnnualLeaves.length === 0">
-                <td colspan="6" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; color: #64748b;">لا يوجد أعوان في عطلة سنوية حالياً</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <!-- 8. Active Sick Leaves -->
+          <div style="margin-bottom: 25px;">
+            <h4
+              style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">
+              ثامناً: الأعوان في عطلة مرضية حالياً</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 11px;">
+              <thead>
+                <tr style="background-color: #f1f5f9;">
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المعرف</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">الاسم واللقب</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المصلحة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ بداية العطلة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">المدة</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ استئناف العمل</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let leave of stats?.activeSickLeaves">
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">{{
+                    leave.personnelRegistrationNumber }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
+                    {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
+                      leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+                  </td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.personnelOrgUnitNameAr }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.duration }} يوم</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #15803d;">{{
+                    leave.returnDate | date:'dd/MM/yyyy' }}</td>
+                </tr>
+                <tr *ngIf="!stats?.activeSickLeaves || stats.activeSickLeaves.length === 0">
+                  <td colspan="6" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; color: #64748b;">
+                    لا يوجد أعوان في عطلة مرضية حالياً</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <!-- 7. Active Sick Leaves -->
-        <div style="margin-bottom: 25px;">
-          <h4 style="border-right: 4px solid #0f172a; padding-right: 8px; font-size: 14px; font-weight: bold; margin-bottom: 12px;">سابعاً: الأعوان في عطلة مرضية حالياً</h4>
-          <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 11px;">
-            <thead>
-              <tr style="background-color: #f1f5f9;">
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">المعرف</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">الاسم واللقب</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">المصلحة</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ بداية العطلة</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">المدة</th>
-                <th style="border: 1px solid #cbd5e1; padding: 6px;">تاريخ استئناف العمل</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let leave of stats?.activeSickLeaves">
-                <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">{{ leave.personnelRegistrationNumber }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">
-                  {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
-                </td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.personnelOrgUnitNameAr }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.duration }} يوم</td>
-                <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #15803d;">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
-              </tr>
-              <tr *ngIf="!stats?.activeSickLeaves || stats.activeSickLeaves.length === 0">
-                <td colspan="6" style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; color: #64748b;">لا يوجد أعوان في عطلة مرضية حالياً</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
+      </div>
 
+      <!-- Modal Actions Footer -->
+      <div class="modal-footer"
+        style="padding: 15px 25px; border-top: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="button" (click)="closePreview()" class="btn btn-secondary">إلغاء</button>
+        <button type="button" (click)="downloadPDF()" class="btn btn-success"
+          style="background: linear-gradient(90deg, #10b981, #059669); border-color: #10b981; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-file-arrow-down"></i> تحميل التقرير (PDF)
+        </button>
+        <button type="button" (click)="printDocument()" class="btn btn-primary"
+          style="background: linear-gradient(90deg, #2563eb, #1d4ed8); border-color: #2563eb; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-print"></i> طباعة التقرير
+        </button>
       </div>
     </div>
-
-    <!-- Modal Actions Footer -->
-    <div class="modal-footer" style="padding: 15px 25px; border-top: 1px solid var(--border-color); background: var(--bg-secondary); display: flex; justify-content: flex-end; gap: 12px;">
-      <button type="button" (click)="closePreview()" class="btn btn-secondary">إلغاء</button>
-      <button type="button" (click)="downloadPDF()" class="btn btn-success" style="background: linear-gradient(90deg, #10b981, #059669); border-color: #10b981; display: flex; align-items: center; gap: 6px;">
-        <i class="fa-solid fa-file-arrow-down"></i> تحميل التقرير (PDF)
-      </button>
-      <button type="button" (click)="printDocument()" class="btn btn-primary" style="background: linear-gradient(90deg, #2563eb, #1d4ed8); border-color: #2563eb; display: flex; align-items: center; gap: 6px;">
-        <i class="fa-solid fa-print"></i> طباعة التقرير
-      </button>
-    </div>
   </div>
-</div>
 </div>

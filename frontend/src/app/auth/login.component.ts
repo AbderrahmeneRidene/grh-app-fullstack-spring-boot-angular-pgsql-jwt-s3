@@ -18,7 +18,7 @@ export class LoginComponent {
 
   constructor(public authService: AuthService, private router: Router) {
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/']);
+      this.redirectUser();
     }
   }
 
@@ -26,12 +26,22 @@ export class LoginComponent {
     this.errorMessage = '';
     this.authService.login(this.credentials).subscribe({
       next: () => {
-        this.router.navigate(['/']);
+        this.redirectUser();
       },
       error: (err) => {
         this.errorMessage = 'اسم المستخدم أو كلمة المرور غير صحيحة';
         console.error(err);
       }
     });
+  }
+
+  private redirectUser(): void {
+    if (this.authService.hasRole('ROLE_SUPER_ADMIN') || 
+        this.authService.hasRole('ROLE_ADMIN_DIRECTION') || 
+        this.authService.hasRole('ROLE_AGENT_RH')) {
+      this.router.navigate(['/']);
+    } else {
+      this.router.navigate(['/my-annual-leaves']);
+    }
   }
 }

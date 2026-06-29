@@ -38,6 +38,7 @@ export class LayoutComponent implements OnInit {
   showConfirmPassword = false;
 
   isLeavesMenuOpen = false;
+  isMyLeavesMenuOpen = false;
 
   constructor(public authService: AuthService, private router: Router, private http: HttpClient) {
     this.authService.currentUser$.subscribe(u => {
@@ -49,6 +50,9 @@ export class LayoutComponent implements OnInit {
     if (this.isLeavesMenuActive()) {
       this.isLeavesMenuOpen = true;
     }
+    if (this.isMyLeavesMenuActive()) {
+      this.isMyLeavesMenuOpen = true;
+    }
   }
 
   toggleLeavesMenu(event: Event): void {
@@ -59,6 +63,16 @@ export class LayoutComponent implements OnInit {
   isLeavesMenuActive(): boolean {
     const url = this.router.url;
     return url.startsWith('/annual-leaves') || url.startsWith('/exceptional-leaves') || url.startsWith('/sick-leaves');
+  }
+
+  toggleMyLeavesMenu(event: Event): void {
+    if (event) event.stopPropagation();
+    this.isMyLeavesMenuOpen = !this.isMyLeavesMenuOpen;
+  }
+
+  isMyLeavesMenuActive(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/my-annual-leaves') || url.startsWith('/my-exceptional-leaves');
   }
 
   canManageOrg(): boolean {

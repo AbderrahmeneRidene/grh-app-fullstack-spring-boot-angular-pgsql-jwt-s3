@@ -153,7 +153,13 @@ export class PersonnelComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.canViewPersonnel()) {
-      this.router.navigate(['/leaves']);
+      if (this.authService.hasRole('ROLE_SUPER_ADMIN') || 
+          this.authService.hasRole('ROLE_ADMIN_DIRECTION') || 
+          this.authService.hasRole('ROLE_AGENT_RH')) {
+        this.router.navigate(['/']);
+      } else {
+        this.router.navigate(['/my-annual-leaves']);
+      }
       return;
     }
     this.fetchPersonnel();

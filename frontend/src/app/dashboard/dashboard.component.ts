@@ -2,12 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../auth/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -77,7 +77,11 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.canViewDashboard()) {
-      this.router.navigate(['/personnel']);
+      if (this.authService.getRoleHierarchyIndex() >= 1) {
+        this.router.navigate(['/personnel']);
+      } else {
+        this.router.navigate(['/my-annual-leaves']);
+      }
       return;
     }
     this.fetchStats();
@@ -201,6 +205,13 @@ export class DashboardComponent implements OnInit {
 
   closePreview(): void {
     this.isPreviewModalOpen = false;
+  }
+
+  scrollToSection(id: string): void {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   printDocument(): void {
