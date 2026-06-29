@@ -36,7 +36,13 @@ public class PersonnelController {
     private CareerProgressionRepository careerProgressionRepository;
 
     @Autowired
-    private LeaveRequestRepository leaveRequestRepository;
+    private AnnualLeaveRepository annualLeaveRepository;
+
+    @Autowired
+    private ExceptionalLeaveRepository exceptionalLeaveRepository;
+
+    @Autowired
+    private SickLeaveRepository sickLeaveRepository;
 
     @Autowired
     private PersonnelTrainingRepository personnelTrainingRepository;
@@ -388,6 +394,46 @@ public class PersonnelController {
         return ResponseEntity.ok(saved);
     }
 
+    @PostMapping("/{id}/children")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT_RH', 'ROLE_SUPER_ADMIN')")
+    @Transactional
+    public ResponseEntity<?> addChild(@PathVariable Long id, @RequestBody ChildDto childDto) {
+        Optional<Personnel> personnelOpt = personnelRepository.findById(id);
+        if (personnelOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Personnel personnel = personnelOpt.get();
+        Child child = Child.builder()
+            .name(childDto.getName())
+            .birthDate(childDto.getBirthDate())
+            .personnel(personnel)
+            .build();
+        personnel.getChildren().add(child);
+        personnelRepository.save(personnel);
+        return ResponseEntity.ok(convertToDto(personnel));
+    }
+
+    @PostMapping("/{id}/stages")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT_RH', 'ROLE_SUPER_ADMIN')")
+    @Transactional
+    public ResponseEntity<?> addStage(@PathVariable Long id, @RequestBody PersonnelStageDto stageDto) {
+        Optional<Personnel> personnelOpt = personnelRepository.findById(id);
+        if (personnelOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Personnel personnel = personnelOpt.get();
+        PersonnelStage stage = PersonnelStage.builder()
+            .title(stageDto.getTitle())
+            .startDate(stageDto.getStartDate())
+            .duration(stageDto.getDuration())
+            .institution(stageDto.getInstitution())
+            .personnel(personnel)
+            .build();
+        personnel.getStages().add(stage);
+        personnelRepository.save(personnel);
+        return ResponseEntity.ok(convertToDto(personnel));
+    }
+
     private PersonnelDto convertToDto(Personnel p) {
         PersonnelDto.PersonnelDtoBuilder builder = PersonnelDto.builder()
                 .id(p.getId())
@@ -667,9 +713,10 @@ public class PersonnelController {
         List<CareerProgression> careers = careerProgressionRepository.findByPersonnelIdOrderByPromotionDateDesc(id);
         careerProgressionRepository.deleteAll(careers);
 
-        // 3. Delete associated leave requests
-        List<LeaveRequest> leaves = leaveRequestRepository.findByPersonnelId(id);
-        leaveRequestRepository.deleteAll(leaves);
+        // 3. Delete associated leaves (annual, exceptional, sick)
+        annualLeaveRepository.deleteAll(annualLeaveRepository.findByPersonnelId(id));
+        exceptionalLeaveRepository.deleteAll(exceptionalLeaveRepository.findByPersonnelId(id));
+        sickLeaveRepository.deleteAll(sickLeaveRepository.findByPersonnelId(id));
 
         // 4. Delete associated personnel trainings
         List<PersonnelTraining> trainings = personnelTrainingRepository.findByPersonnelId(id);

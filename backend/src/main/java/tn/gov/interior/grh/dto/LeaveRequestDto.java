@@ -10,6 +10,7 @@ import java.time.LocalDate;
 @Builder
 public class LeaveRequestDto {
     private Long id;
+    private String leaveCode;
     private Long personnelId;
     private String personnelFullNameAr;
     private String personnelFullNameFr;

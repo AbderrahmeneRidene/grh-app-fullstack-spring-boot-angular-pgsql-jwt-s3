@@ -23,4 +23,7 @@ public class Administration {
 
     @Column(unique = true, nullable = false)
     private String code; // e.g., ENFCSPN (Ecole Nationale)
+
+    @Column(name = "logo_url", columnDefinition = "TEXT")
+    private String logoUrl;
 }

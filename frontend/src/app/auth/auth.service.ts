@@ -9,16 +9,50 @@ export class AuthService {
   private apiUrl = 'http://localhost:8080/api/auth';
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private appSettingsSubject = new BehaviorSubject<any>(null);
+  public appSettings$ = this.appSettingsSubject.asObservable();
 
   constructor(private http: HttpClient) {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       this.currentUserSubject.next(JSON.parse(storedUser));
     }
+    this.loadAppSettings().subscribe({
+      error: err => console.error('Error loading app settings', err)
+    });
   }
 
   public get currentUserValue(): any {
     return this.currentUserSubject.value;
+  }
+
+  public get appSettingsValue(): any {
+    return this.appSettingsSubject.value;
+  }
+
+  loadAppSettings(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/settings`).pipe(
+      tap(settings => {
+        if (settings) {
+          this.appSettingsSubject.next(settings);
+        }
+      })
+    );
+  }
+
+  getAppNameAr(): string {
+    const settings = this.appSettingsValue;
+    return settings && settings.nameAr ? settings.nameAr : 'المدرسة الوطنية لتكوين إطارات الأمن الوطني والشرطة الوطنية بصلامبو';
+  }
+
+  getAppNameFr(): string {
+    const settings = this.appSettingsValue;
+    return settings && settings.nameFr ? settings.nameFr : 'Ecole Nationale de Formation des Cadres de la Surete Nationale et de la Police Nationale de Carthage Salambo';
+  }
+
+  getAppLogo(): string {
+    const settings = this.appSettingsValue;
+    return settings && settings.logoUrl ? settings.logoUrl : 'assets/logo.png';
   }
 
   login(credentials: any): Observable<any> {

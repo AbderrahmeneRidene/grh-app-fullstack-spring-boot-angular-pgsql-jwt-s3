@@ -82,6 +82,8 @@ export class PersonnelComponent implements OnInit {
   activeTab = 'info';
   academicList: any[] = [];
   newAcademic: any = { degreeName: '', specialty: '', university: '', graduationYear: null };
+  newChild: any = { name: '', birthDate: '' };
+  newStage: any = { title: '', startDate: '', duration: '', institution: '' };
   careerList: any[] = [];
   newPromotion: any = { newGrade: '', promotionDate: '', decreeReference: '' };
   role = 'ROLE_USER';
@@ -147,7 +149,7 @@ export class PersonnelComponent implements OnInit {
     return this.isEditModalOpen;
   }
 
-  constructor(private http: HttpClient, private authService: AuthService, private router: Router) {}
+  constructor(private http: HttpClient, public authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
     if (!this.canViewPersonnel()) {
@@ -521,6 +523,30 @@ export class PersonnelComponent implements OnInit {
     });
   }
 
+  addChildToDetail(): void {
+    if (!this.selectedPersonnel) return;
+    const headers = this.authService.getAuthHeaders();
+    this.http.post<any>(`http://localhost:8080/api/personnel/${this.selectedPersonnel.id}/children`, this.newChild, { headers }).subscribe({
+      next: (updatedPersonnel) => {
+        this.selectedPersonnel.children = updatedPersonnel.children;
+        this.newChild = { name: '', birthDate: '' };
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  addStageToDetail(): void {
+    if (!this.selectedPersonnel) return;
+    const headers = this.authService.getAuthHeaders();
+    this.http.post<any>(`http://localhost:8080/api/personnel/${this.selectedPersonnel.id}/stages`, this.newStage, { headers }).subscribe({
+      next: (updatedPersonnel) => {
+        this.selectedPersonnel.stages = updatedPersonnel.stages;
+        this.newStage = { title: '', startDate: '', duration: '', institution: '' };
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
   // Avatar upload and dynamic lists methods (from form component)
   onFileSelected(event: any): void {
     const file = event.target.files[0];
@@ -555,7 +581,15 @@ export class PersonnelComponent implements OnInit {
 
   getAvatar(p: any): string {
     if (!p) return 'assets/avatar_default.png';
-    if (p.profilePicture) return p.profilePicture;
+    if (p.profilePicture) {
+      let url = p.profilePicture;
+      if (url.includes('minio:9000/')) {
+        url = '/' + url.split('minio:9000/')[1];
+      } else if (url.includes('localhost:9000/') && window.location.port !== '4200') {
+        url = '/' + url.split('localhost:9000/')[1];
+      }
+      return url;
+    }
     const gender = p.gender;
     if (gender === 'MALE') return 'assets/avatar_male.png';
     if (gender === 'FEMALE') return 'assets/avatar_female.png';

@@ -2,7 +2,7 @@
   <div class="page-header">
     <div class="header-title">
       <h1>إدارة شؤون الأعوان والإطارات</h1>
-      <p>تسجيل العسكريين والأعوان، تتبع الترقيات، التكوين، والحالة المدنية</p>
+      <p>تسجيل الأعوان والإطارات، تتبع الترقيات، التكوين، والحالة المدنية</p>
     </div>
     <div class="header-actions">
       <button *ngIf="isAgentRh()" (click)="openCreateModal()" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700;">
@@ -29,7 +29,7 @@
       <thead>
         <tr>
           <th (click)="setSort('registrationNumber')" style="cursor: pointer; user-select: none;">
-            المعرف <i [class]="getSortIcon('registrationNumber')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            المعرف الوحيد <i [class]="getSortIcon('registrationNumber')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
           </th>
           <th (click)="setSort('name')" style="cursor: pointer; user-select: none;">
             الإسم الإداري <i [class]="getSortIcon('name')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
@@ -245,6 +245,16 @@
             لا يوجد أطفال مسجلون لهذا العون
           </div>
         </div>
+
+        <!-- Formulaire ajout enfant -->
+        <div class="quick-form-card" *ngIf="canEdit()" style="margin-top: 15px;">
+          <h4><i class="fa-solid fa-plus"></i> إضافة ابن / ابنة جديدة</h4>
+          <div class="inline-fields">
+            <input type="text" class="form-control" placeholder="الاسم واللقب" [(ngModel)]="newChild.name">
+            <input type="date" class="form-control" placeholder="تاريخ الولادة" [(ngModel)]="newChild.birthDate">
+            <button (click)="addChildToDetail()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> إضافة ابن / ابنة</button>
+          </div>
+        </div>
       </div>
 
       <!-- Tab Stages -->
@@ -260,6 +270,18 @@
           </div>
           <div *ngIf="!selectedPersonnel.stages || selectedPersonnel.stages.length === 0" class="no-timeline-data">
             لا توجد تربصات أو دورات تكوينية مسجلة لهذا العون
+          </div>
+        </div>
+
+        <!-- Formulaire ajout stage -->
+        <div class="quick-form-card" *ngIf="canEdit()" style="margin-top: 15px;">
+          <h4><i class="fa-solid fa-plus"></i> إضافة تربص أو تكوين جديد</h4>
+          <div class="inline-fields">
+            <input type="text" class="form-control" placeholder="موضوع/عنوان التربص" [(ngModel)]="newStage.title">
+            <input type="date" class="form-control" [(ngModel)]="newStage.startDate">
+            <input type="text" class="form-control" placeholder="المدة (مثال: 3 أشهر)" [(ngModel)]="newStage.duration">
+            <input type="text" class="form-control" placeholder="مكان التربص/المؤسسة" [(ngModel)]="newStage.institution">
+            <button (click)="addStageToDetail()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> إضافة تربص جديد</button>
           </div>
         </div>
       </div>
@@ -577,56 +599,7 @@
         </div>
       </div>
 
-      <!-- Children Section -->
-      <div class="form-section-title">قائمة الأبناء</div>
-      <div class="dynamic-list-container">
-        <div class="dynamic-list-item" *ngFor="let child of personnelData.children; let idx = index">
-          <div class="inline-fields-row" style="margin-bottom: 5px; display: flex; flex-direction: column; gap: 4px;">
-            <div style="display: flex; gap: 8px; width: 100%;">
-              <input type="text" class="form-control" name="childName_{{idx}}" required [(ngModel)]="child.name" [ngModelOptions]="{standalone: true}" placeholder="اسم الابن / الابنة" style="flex: 1;">
-              <input type="date" class="form-control" name="childDob_{{idx}}" required [(ngModel)]="child.birthDate" [ngModelOptions]="{standalone: true}" placeholder="تاريخ الولادة" style="flex: 1;">
-              <button type="button" class="btn btn-danger btn-sm" (click)="removeChild(idx)" title="حذف" style="flex-shrink: 0;">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
-            <div *ngIf="child.name && getArabicNameError(child.name) && getFrenchNameError(child.name)" class="text-danger error-msg-hint" style="font-size: 11px;">
-              يجب أن يحتوي الاسم على حروف عربية أو لاتينية فقط
-            </div>
-            <div *ngIf="child.birthDate && calculateAge(child.birthDate) < 0" class="text-danger error-msg-hint" style="font-size: 11px;">
-              تاريخ الولادة لا يمكن أن يكون في المستقبل
-            </div>
-          </div>
-        </div>
-        <button type="button" class="btn btn-secondary btn-sm" (click)="addChild()" style="margin-top: 5px;">
-          <i class="fa-solid fa-plus"></i> إضافة ابن / ابنة
-        </button>
-      </div>
 
-      <!-- Stages/Internships Section -->
-      <div class="form-section-title">التربصات والتكوين المهني</div>
-      <div class="dynamic-list-container">
-        <div class="dynamic-list-item-stage" *ngFor="let stage of personnelData.stages; let idx = index">
-          <div class="inline-fields-row" style="margin-bottom: 5px;">
-            <input type="text" class="form-control" name="stageTitle_{{idx}}" required [(ngModel)]="stage.title" [ngModelOptions]="{standalone: true}" placeholder="موضوع/عنوان التربص">
-            <div style="display: flex; flex-direction: column; flex: 1;">
-              <input type="date" class="form-control" name="stageStart_{{idx}}" required [(ngModel)]="stage.startDate" [ngModelOptions]="{standalone: true}" placeholder="تاريخ البداية">
-              <div *ngIf="stage.startDate && calculateAge(stage.startDate) < 0" class="text-danger error-msg-hint" style="font-size: 11px; margin-top: 2px;">
-                تاريخ البداية لا يمكن أن يكون في المستقبل
-              </div>
-            </div>
-          </div>
-          <div class="inline-fields-row">
-            <input type="text" class="form-control" name="stageDur_{{idx}}" required [(ngModel)]="stage.duration" [ngModelOptions]="{standalone: true}" placeholder="المدة (مثال: 3 أشهر)">
-            <input type="text" class="form-control" name="stageInst_{{idx}}" required [(ngModel)]="stage.institution" [ngModelOptions]="{standalone: true}" placeholder="مكان التربص/المؤسسة">
-            <button type="button" class="btn btn-danger btn-sm" (click)="removeStage(idx)" title="حذف">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
-        </div>
-        <button type="button" class="btn btn-secondary btn-sm" (click)="addStage()" style="margin-top: 5px;">
-          <i class="fa-solid fa-plus"></i> إضافة تربص جديد
-        </button>
-      </div>
 
       <div class="form-section-title">بيانات الحساب الإلكتروني للمنظومة</div>
       <div class="form-row">
@@ -725,10 +698,10 @@
       كتابة الدولة للأمن<br>
       الإدارة العامة للأمن الوطني<br>
       الإدارة العامة للتكوين<br>
-      المدرسة الوطنية لتكوين إطارات الأمن الوطني والشرطة الوطنية بصلامبو
+      {{ authService.getAppNameAr() }}
     </div>
     <div style="text-align: center;">
-      <img src="assets/logo.png" style="width: 70px; height: auto;" alt="Logo">
+      <img [src]="authService.getAppLogo()" style="width: 70px; height: auto;" alt="Logo">
     </div>
     <div style="text-align: left; font-size: 11px; font-weight: bold; color: #555;">
       تاريخ الاستخراج:<br>

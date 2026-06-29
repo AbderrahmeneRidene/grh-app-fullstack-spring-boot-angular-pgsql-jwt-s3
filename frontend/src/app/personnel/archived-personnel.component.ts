@@ -118,7 +118,13 @@ export class ArchivedPersonnelComponent implements OnInit {
   getAvatar(p: any): string {
     if (!p) return 'assets/avatar_default.png';
     if (p.profilePicture) {
-      return p.profilePicture;
+      let url = p.profilePicture;
+      if (url.includes('minio:9000/')) {
+        url = '/' + url.split('minio:9000/')[1];
+      } else if (url.includes('localhost:9000/') && window.location.port !== '4200') {
+        url = '/' + url.split('localhost:9000/')[1];
+      }
+      return url;
     }
     const gender = p.gender;
     if (gender === 'MALE') return 'assets/avatar_male.png';

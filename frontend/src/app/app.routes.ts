@@ -5,9 +5,12 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { OrganizationComponent } from './organization/organization.component';
 import { PersonnelComponent } from './personnel/personnel.component';
 import { ArchivedPersonnelComponent } from './personnel/archived-personnel.component';
-import { LeavesComponent } from './leaves/leaves.component';
-import { MyLeavesComponent } from './leaves/my-leaves.component';
-import { TrainingsComponent } from './trainings/trainings.component';
+import { AnnualLeavesComponent } from './leaves/annual-leaves.component';
+import { ExceptionalLeavesComponent } from './leaves/exceptional-leaves.component';
+import { MyAnnualLeavesComponent } from './leaves/my-annual-leaves.component';
+import { MyExceptionalLeavesComponent } from './leaves/my-exceptional-leaves.component';
+import { SickLeavesComponent } from './leaves/sick-leaves.component';
+import { AppSettingsComponent } from './settings/app-settings.component';
 import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
@@ -21,9 +24,12 @@ export const routes: Routes = [
       { path: 'organization', component: OrganizationComponent },
       { path: 'personnel', component: PersonnelComponent },
       { path: 'archive', component: ArchivedPersonnelComponent },
-      { path: 'leaves', component: LeavesComponent },
-      { path: 'my-leaves', component: MyLeavesComponent },
-      { path: 'trainings', component: TrainingsComponent }
+      { path: 'annual-leaves', component: AnnualLeavesComponent },
+      { path: 'exceptional-leaves', component: ExceptionalLeavesComponent },
+      { path: 'my-annual-leaves', component: MyAnnualLeavesComponent },
+      { path: 'my-exceptional-leaves', component: MyExceptionalLeavesComponent },
+      { path: 'sick-leaves', component: SickLeavesComponent },
+      { path: 'app-settings', component: AppSettingsComponent }
     ]
   },
   { path: '**', redirectTo: 'login' }

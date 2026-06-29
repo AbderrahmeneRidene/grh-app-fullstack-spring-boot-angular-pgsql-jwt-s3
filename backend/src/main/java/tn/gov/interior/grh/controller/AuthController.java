@@ -39,6 +39,14 @@ public class AuthController {
     @Autowired
     private PersonnelRepository personnelRepository;
 
+    @Autowired
+    private tn.gov.interior.grh.repository.AdministrationRepository administrationRepository;
+
+    @GetMapping("/settings")
+    public ResponseEntity<?> getAppSettings() {
+        return ResponseEntity.ok(administrationRepository.findById(1L).orElse(null));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(

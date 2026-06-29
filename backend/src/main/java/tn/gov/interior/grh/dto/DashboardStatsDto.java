@@ -21,5 +21,6 @@ public class DashboardStatsDto {
     private long activeFemaleCount;
     private Map<String, Long> activePersonnelByAgeGroup;
     private List<LeaveRequestDto> activeAnnualLeaves;
+    private List<LeaveRequestDto> activeExceptionalLeaves;
     private List<LeaveRequestDto> activeSickLeaves;
 }

@@ -316,10 +316,10 @@
             كتابة الدولة للأمن<br>
             الإدارة العامة للأمن الوطني<br>
             الإدارة العامة للتكوين<br>
-            المدرسة الوطنية لتكوين إطارات الأمن الوطني والشرطة الوطنية بصلامبو
+            {{ authService.getAppNameAr() }}
           </div>
           <div style="text-align: center;">
-            <img src="assets/logo.png" style="width: 70px; height: auto;" alt="Logo">
+            <img [src]="authService.getAppLogo()" style="width: 70px; height: auto;" alt="Logo">
           </div>
           <div style="text-align: left; font-size: 11px; font-weight: bold; color: #555;">
             تاريخ الاستخراج:<br>

@@ -594,3 +594,56 @@
   color: #fff;
 }
 
+/* Mobile responsiveness for Personnel page */
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .header-actions {
+    width: 100%;
+  }
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .avatar-upload-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  
+  .modal-card {
+    padding: 15px;
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .modal-header h3 {
+    font-size: 15px;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+

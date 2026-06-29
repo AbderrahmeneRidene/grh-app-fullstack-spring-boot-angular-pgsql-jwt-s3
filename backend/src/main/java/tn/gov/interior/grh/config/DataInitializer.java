@@ -30,7 +30,13 @@ public class DataInitializer implements CommandLineRunner {
     private PersonnelRepository personnelRepository;
 
     @Autowired
-    private LeaveRequestRepository leaveRequestRepository;
+    private AnnualLeaveRepository annualLeaveRepository;
+
+    @Autowired
+    private ExceptionalLeaveRepository exceptionalLeaveRepository;
+
+    @Autowired
+    private SickLeaveRepository sickLeaveRepository;
 
     @Autowired
     private TrainingRepository trainingRepository;
@@ -374,22 +380,33 @@ public class DataInitializer implements CommandLineRunner {
                 .build());
 
         // 9. Demandes de congés
-        leaveRequestRepository.save(LeaveRequest.builder()
+        sickLeaveRepository.save(SickLeave.builder()
+                .leaveCode("00001")
                 .personnel(student)
-                .leaveType("MALADIE")
                 .startDate(LocalDate.now().minusDays(5))
                 .endDate(LocalDate.now().minusDays(3))
-                .status("APPROVED")
                 .justification("شهادة طبية لراحة 3 أيام (Certificat de 3 jours)")
+                .createdBy("admin")
                 .build());
 
-        leaveRequestRepository.save(LeaveRequest.builder()
+        annualLeaveRepository.save(AnnualLeave.builder()
+                .leaveCode("00001")
                 .personnel(student)
-                .leaveType("ANNUEL")
                 .startDate(LocalDate.now().plusDays(10))
                 .endDate(LocalDate.now().plusDays(25))
                 .status("PENDING")
                 .justification("إجازة سنوية (Conge annuel principal)")
+                .build());
+
+        exceptionalLeaveRepository.save(ExceptionalLeave.builder()
+                .leaveCode("00001")
+                .personnel(student)
+                .startDate(LocalDate.now().plusDays(2))
+                .endDate(LocalDate.now().plusDays(3))
+                .exceptionalLeaveType("TWO_DAYS")
+                .duration(2.0)
+                .status("PENDING")
+                .justification("رخصة استثنائية (Conge exceptionnel)")
                 .build());
     }
 }

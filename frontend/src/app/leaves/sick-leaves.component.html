@@ -1,0 +1,234 @@
+<div class="leaves-wrapper animated-fade">
+  <div class="page-header">
+    <div class="header-title">
+      <h1>إدارة إجازات المرض</h1>
+      <p>إنشاء وتمديد إجازات المرض للموظفين (خاص بعون الموارد البشرية)</p>
+    </div>
+    <button *ngIf="isAgentRhOrAdmin()" (click)="openCreateModal()" class="btn btn-primary">
+      <i class="fa-solid fa-plus"></i> إنشاء إجازة مرضية
+    </button>
+  </div>
+
+  <div class="action-bar glass-card" style="display: flex; gap: 20px; align-items: center; padding: 15px 20px; margin-bottom: 20px; flex-wrap: wrap;">
+    <div class="search-box" style="flex: 1; min-width: 250px; position: relative;">
+      <i class="fa-solid fa-magnifying-glass search-icon" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none;"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="ابحث بالاسم أو المعرّف أو رقم الإجازة..."
+        [(ngModel)]="searchQuery"
+        style="padding-right: 36px; width: 100%;">
+    </div>
+  </div>
+
+  <!-- List -->
+  <div class="glass-card list-container">
+    <div class="container-header">
+      <h3>قائمة إجازات المرض</h3>
+      <button (click)="fetchSickLeaves()" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-arrows-rotate"></i> تحديث
+      </button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="min-width: 75px;">المعرف الوحيد</th>
+            <th (click)="setSort('name')" style="cursor: pointer; user-select: none;">
+              الموظف <i [class]="getSortIcon('name')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th (click)="setSort('grade')" style="cursor: pointer; user-select: none;">
+              الرتبة <i [class]="getSortIcon('grade')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th (click)="setSort('startDate')" style="cursor: pointer; user-select: none;">
+              من تاريخ <i [class]="getSortIcon('startDate')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th (click)="setSort('endDate')" style="cursor: pointer; user-select: none;">
+              إلى تاريخ <i [class]="getSortIcon('endDate')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th>المدة</th>
+            <th>المرجع/السبب</th>
+            <th *ngIf="isAgentRhOrAdmin() || isSuperAdmin()">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of getSortedAndPaginatedLeaves()">
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <img [src]="getAvatar(l)" (click)="openImagePreview(l, $event)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0; cursor: pointer;" alt="Avatar">
+                <strong>{{ l.personnelRegistrationNumber }}</strong>
+              </div>
+            </td>
+            <td><strong>{{ l.personnelFullNameAr }}</strong><br><small>{{ l.personnelOrgUnitNameAr }}</small></td>
+            <td>{{ l.personnelGrade }}</td>
+            <td>{{ l.startDate }}</td>
+            <td>{{ l.endDate }}</td>
+            <td>{{ l.duration }} يوم</td>
+            <td>{{ l.justification || 'لا يوجد' }}</td>
+            <td *ngIf="isAgentRhOrAdmin() || isSuperAdmin()">
+              <div class="action-buttons">
+                <button *ngIf="isAgentRhOrAdmin()" (click)="openExtendModal(l)" class="btn-action btn-edit" title="تمديد الإجازة">
+                  <i class="fa-solid fa-calendar-plus"></i> تمديد
+                </button>
+                <button *ngIf="isSuperAdmin()" (click)="onDeleteSickLeave(l)" class="btn-action btn-reject" title="حذف نهائي" style="background-color: #dc3545; border-color: #dc3545;">
+                  <i class="fa-solid fa-trash"></i> حذف
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="sickLeavesList.length === 0">
+            <td colspan="8" class="no-data">لا توجد إجازات مرضية مسجلة</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="sickLeavesList.length > 0">
+      <div class="pagination-info">
+        <span>عرض {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, sickLeavesList.length) }} من أصل {{ sickLeavesList.length }} إجازة مرضية</span>
+      </div>
+      
+      <div class="pagination-controls">
+        <button class="btn btn-pagination" [disabled]="currentPage === 1" (click)="changePage(1)" title="الصفحة الأولى">
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+        <button class="btn btn-pagination" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)" title="الصفحة السابقة">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
+        
+        <button *ngFor="let page of getPageNumbers()" 
+                class="btn btn-pagination btn-page-num" 
+                [class.active]="page === currentPage" 
+                (click)="changePage(page)">
+          {{ page }}
+        </button>
+        
+        <button class="btn btn-pagination" [disabled]="currentPage === getTotalPages()" (click)="changePage(currentPage + 1)" title="الصفحة التالية">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <button class="btn btn-pagination" [disabled]="currentPage === getTotalPages()" (click)="changePage(getTotalPages())" title="الصفحة الأخيرة">
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+      </div>
+
+      <div class="pagination-size">
+        <label>الإجازات في الصفحة:</label>
+        <select class="form-control select-page-size" [(ngModel)]="pageSize" (change)="currentPage = 1">
+          <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay animated-fade" *ngIf="isSickLeaveModalOpen" (click)="closeSickLeaveModal()">
+  <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fa-solid fa-hospital"></i> 
+        <span *ngIf="!isExtendMode">إنشاء إجازة مرضية جديدة</span>
+        <span *ngIf="isExtendMode">تمديد إجازة مرضية</span>
+      </h3>
+      <button (click)="closeSickLeaveModal()" class="btn-close">&times;</button>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #sickLeaveForm="ngForm" class="modal-form">
+      <!-- Personnel selection (only on create) -->
+      <div class="form-group" *ngIf="!isExtendMode">
+        <label class="form-label">الموظف المعني <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="personnelSearchQuery" placeholder="البحث بالمعرف أو الاسم..." [(ngModel)]="personnelSearchQuery" style="margin-bottom: 8px;">
+        <select class="form-control" name="personnelId" required [(ngModel)]="newSickLeave.personnelId">
+          <option [ngValue]="null" disabled>اختر الموظف (البحث أعلاه للفلترة)</option>
+          <option *ngFor="let p of filteredPersonnelList" [value]="p.id">
+            {{ p.registrationNumber }} - {{ p.firstNameAr }} <span *ngIf="p.fatherNameAr">{{ p.fatherNameAr }} </span>{{ p.lastNameAr }} ({{ p.grade }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Display personnel name (on extend - readonly) -->
+      <div class="form-group" *ngIf="isExtendMode">
+        <label class="form-label">الموظف المعني</label>
+        <input type="text" class="form-control" readonly
+               [value]="getExtendingPersonnelName()"
+               style="cursor: not-allowed; opacity: 0.65;">
+        <small class="text-muted" style="color: var(--text-secondary); font-size: 12px;">
+          <i class="fa-solid fa-lock"></i> لا يمكن تغيير الموظف أثناء التمديد
+        </small>
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية <span class="text-danger" *ngIf="!isExtendMode">*</span></label>
+          <input type="date" class="form-control" name="startDate" [required]="!isExtendMode" 
+                 [(ngModel)]="newSickLeave.startDate" (ngModelChange)="calculateDates()"
+                 [readonly]="isExtendMode">
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            {{ isExtendMode ? 'المدة الجديدة (بالأيام)' : 'المدة (بالأيام)' }} <span class="text-danger">*</span>
+          </label>
+          <input type="number" class="form-control" name="duration" required min="1" 
+                 [(ngModel)]="newSickLeave.duration" (ngModelChange)="calculateDates()" 
+                 placeholder="مثال: 5">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">تاريخ النهاية</label>
+        <input type="date" class="form-control" name="endDate" readonly [(ngModel)]="newSickLeave.endDate">
+      </div>
+
+      <div class="form-group" *ngIf="isExtendMode">
+        <label class="form-label">ملاحظات التمديد</label>
+        <textarea
+          class="form-control"
+          name="extensionNotes"
+          rows="2"
+          placeholder="أدخل سبب التمديد..."
+          [(ngModel)]="newSickLeave.extensionNotes"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">السبب / التبرير</label>
+        <textarea
+          class="form-control"
+          name="justification"
+          rows="3"
+          placeholder="أدخل التشخيص أو مرجع الشهادة الطبية"
+          [(ngModel)]="newSickLeave.justification"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">تحميل المرفقات (شهادة طبية)</label>
+        <input type="text" class="form-control" name="doc" placeholder="أدخل اسم الملف أو مسار الوثيقة" [(ngModel)]="newSickLeave.documentPath">
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeSickLeaveModal()" class="btn btn-secondary">إلغاء</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isFormValid()">
+          <i class="fa-solid" [ngClass]="isExtendMode ? 'fa-calendar-plus' : 'fa-plus'"></i> 
+          <span *ngIf="!isExtendMode">إنشاء الإجازة</span>
+          <span *ngIf="isExtendMode">تمديد الإجازة</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Image Preview -->
+<div class="modal-overlay animated-fade image-preview-overlay" *ngIf="imagePreviewPersonnel" (click)="imagePreviewPersonnel = null">
+  <div class="image-preview-card glass-card" (click)="$event.stopPropagation()">
+    <button (click)="imagePreviewPersonnel = null" class="btn-close image-preview-close">&times;</button>
+    <div class="image-preview-content">
+      <img [src]="getAvatar(imagePreviewPersonnel)" class="image-preview-full" alt="صورة الملف الشخصي">
+      <div class="image-preview-info">
+        <h3>{{ imagePreviewPersonnel.firstNameAr }} {{ imagePreviewPersonnel.lastNameAr }}</h3>
+        <p>{{ imagePreviewPersonnel.firstNameFr }} {{ imagePreviewPersonnel.lastNameFr }}</p>
+        <span class="badge-grade">{{ imagePreviewPersonnel.grade }}</span>
+      </div>
+    </div>
+  </div>
+</div>

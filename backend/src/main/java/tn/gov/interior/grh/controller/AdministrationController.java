@@ -41,6 +41,22 @@ public class AdministrationController {
         return administrationRepository.save(administration);
     }
 
+    @PutMapping("/settings")
+    @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')")
+    public ResponseEntity<?> updateSettings(@RequestBody Administration update) {
+        Optional<Administration> adminOpt = administrationRepository.findById(1L);
+        if (adminOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Default administration not found");
+        }
+        Administration admin = adminOpt.get();
+        if (update.getNameAr() != null) admin.setNameAr(update.getNameAr());
+        if (update.getNameFr() != null) admin.setNameFr(update.getNameFr());
+        if (update.getLogoUrl() != null) admin.setLogoUrl(update.getLogoUrl());
+        
+        Administration saved = administrationRepository.save(admin);
+        return ResponseEntity.ok(saved);
+    }
+
     // --- Gestion des Unités Organisationnelles ---
 
     @GetMapping("/org-units")

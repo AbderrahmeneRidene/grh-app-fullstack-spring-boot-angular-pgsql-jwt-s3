@@ -1,0 +1,94 @@
+<div class="settings-wrapper animated-fade">
+  <div class="page-header">
+    <div class="header-title">
+      <h1>إعدادات المنظومة والمظهر</h1>
+      <p>تعديل الشعار الرئيسي والاسم الرسمي للإدارة المعروض في لوحة التحكم والصفحة الرئيسية</p>
+    </div>
+  </div>
+
+  <div class="glass-card form-container">
+    <div class="container-header">
+      <h3>بيانات الهيئة والمظهر العام</h3>
+    </div>
+
+    <div *ngIf="successMessage" class="banner success-banner">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <div *ngIf="errorMessage" class="banner error-banner">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #settingsForm="ngForm" class="settings-form">
+      <div class="form-grid">
+        <!-- Logo Section -->
+        <div class="logo-section">
+          <label class="form-label">شعار المنظومة الرئيسي <span class="text-danger">*</span></label>
+          <div class="logo-preview-box">
+            <img [src]="settings.logoUrl || 'assets/logo.png'" alt="Current Logo" class="preview-img">
+          </div>
+          <div class="logo-actions" style="margin-top: 15px;">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="fileInput.click()">
+              <i class="fa-solid fa-cloud-arrow-up"></i> تغيير الشعار
+            </button>
+            <button type="button" class="btn btn-danger btn-sm" *ngIf="settings.logoUrl" (click)="removeLogo()">
+              <i class="fa-solid fa-trash-can"></i> استخدام الافتراضي
+            </button>
+            <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" style="display: none;">
+          </div>
+          <small class="text-muted" style="display: block; margin-top: 8px;">
+            يفضل رفع صورة مربعة بصيغة PNG أو JPG وبخلفية شفافة لا تتجاوز 2 ميغابايت.
+          </small>
+        </div>
+
+        <!-- Inputs Section -->
+        <div class="inputs-section">
+          <div class="form-group">
+            <label class="form-label">اسم الهيئة باللغة العربية (يعرض في أعلى لوحة التحكم وصفحة الدخول) <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              name="nameAr" 
+              class="form-control" 
+              placeholder="مثال: المدرسة الوطنية لتكوين إطارات الأمن الوطني..."
+              [(ngModel)]="settings.nameAr" 
+              required>
+          </div>
+
+          <div class="form-group" style="margin-top: 20px;">
+            <label class="form-label">اسم الهيئة باللغة الفرنسية <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              name="nameFr" 
+              class="form-control" 
+              placeholder="مثال: Ecole Nationale de formation..."
+              [(ngModel)]="settings.nameFr" 
+              required>
+          </div>
+
+          <div class="form-group" style="margin-top: 20px;">
+            <label class="form-label">رمز الهيئة التعريفي (معرّف ثابت)</label>
+            <input 
+              type="text" 
+              name="code" 
+              class="form-control" 
+              [(ngModel)]="settings.code" 
+              readonly 
+              style="background: rgba(255,255,255,0.03); opacity: 0.7; cursor: not-allowed;">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-secondary" (click)="fetchSettings()" [disabled]="isLoading">
+          <i class="fa-solid fa-arrows-rotate"></i> إلغاء التغييرات
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="!settingsForm.form.valid || isLoading">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>{{ isLoading ? 'جاري الحفظ...' : 'حفظ الإعدادات' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

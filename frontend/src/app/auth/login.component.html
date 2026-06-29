@@ -1,9 +1,9 @@
 <div class="login-container">
   <div class="glass-card login-card animated-fade">
     <div class="logo-wrapper">
-      <img src="assets/logo.png" class="school-logo" alt="Logo Officiel">
+      <img [src]="authService.getAppLogo()" class="school-logo" alt="Logo Officiel">
       <h2>وزارة الداخـليّة</h2>
-      <h3>المدرسة الوطنية لتكوين إطارات الأمن الوطني والشرطة الوطنية بصلامبو</h3>
+      <h3>{{ authService.getAppNameAr() }}</h3>
     </div>
     
     <h1 class="title">تسجيل الدخول إلى منظومة GRH</h1>

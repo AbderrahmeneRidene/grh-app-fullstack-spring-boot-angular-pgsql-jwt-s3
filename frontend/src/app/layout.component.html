@@ -1,8 +1,8 @@
 <div class="app-container" (click)="closeDropdown()">
   <!-- Sidebar de droite (RTL) -->
-  <aside class="sidebar glass-card">
+  <aside class="sidebar glass-card" [class.open]="isMobileSidebarOpen" (click)="$event.stopPropagation()">
     <div class="sidebar-header">
-      <img src="assets/logo.png" class="school-logo-small" alt="Logo">
+      <img [src]="authService.getAppLogo()" class="school-logo-small" alt="Logo">
       <h2>منظومة GRH</h2>
     </div>
 
@@ -27,19 +27,43 @@
         <span>أرشيف الموظفين</span>
       </a>
 
-      <a routerLink="/leaves" routerLinkActive="active" class="nav-item" *ngIf="canManageLeaves()">
-        <i class="fa-solid fa-calendar-check icon"></i>
-        <span>الرخص والإجازات</span>
+      <div class="nav-dropdown" *ngIf="canManageLeaves()">
+        <button type="button" class="nav-item nav-dropdown-toggle" (click)="toggleLeavesMenu($event)" [class.active]="isLeavesMenuActive()">
+          <i class="fa-solid fa-calendar-days icon"></i>
+          <span>إدارة الرخص والإجازات</span>
+          <i class="fa-solid fa-chevron-down arrow-icon" [class.open]="isLeavesMenuOpen"></i>
+        </button>
+        
+        <div class="nav-dropdown-menu" [class.open]="isLeavesMenuOpen">
+          <a routerLink="/annual-leaves" routerLinkActive="active" class="nav-sub-item">
+            <i class="fa-solid fa-calendar-check sub-icon"></i>
+            <span>إجازات سنوية</span>
+          </a>
+          <a routerLink="/exceptional-leaves" routerLinkActive="active" class="nav-sub-item">
+            <i class="fa-solid fa-calendar-plus sub-icon"></i>
+            <span>رخص استثنائية</span>
+          </a>
+          <a routerLink="/sick-leaves" routerLinkActive="active" class="nav-sub-item">
+            <i class="fa-solid fa-hospital sub-icon"></i>
+            <span>إجازات المرض</span>
+          </a>
+        </div>
+      </div>
+
+      <a routerLink="/my-annual-leaves" routerLinkActive="active" class="nav-item" *ngIf="!isSuperAdmin()">
+        <i class="fa-solid fa-file-signature icon"></i>
+        <span>رخصي السنوية</span>
       </a>
 
-      <a routerLink="/my-leaves" routerLinkActive="active" class="nav-item">
-        <i class="fa-solid fa-file-waveform icon"></i>
-        <span>رخصي وإجازاتي</span>
+      <a routerLink="/my-exceptional-leaves" routerLinkActive="active" class="nav-item" *ngIf="!isSuperAdmin()">
+        <i class="fa-solid fa-file-circle-plus icon"></i>
+        <span>رخصي الاستثنائية</span>
       </a>
 
-      <a routerLink="/trainings" routerLinkActive="active" class="nav-item">
-        <i class="fa-solid fa-graduation-cap icon"></i>
-        <span>التكوين والتدريب</span>
+
+      <a routerLink="/app-settings" routerLinkActive="active" class="nav-item" *ngIf="authService.hasRole('ROLE_SUPER_ADMIN')">
+        <i class="fa-solid fa-gears icon"></i>
+        <span>إعدادات المنظومة</span>
       </a>
     </nav>
   </aside>
@@ -48,8 +72,11 @@
   <div class="content-wrapper">
     <!-- Top Navbar -->
     <header class="navbar glass-card">
+      <button class="mobile-menu-btn" (click)="toggleMobileSidebar($event)" aria-label="Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
       <div class="navbar-brand">
-        <h3>{{ currentAdminName }}</h3>
+        <h3>{{ authService.getAppNameAr() }}</h3>
         <span class="sub-brand">وزارة الداخلية - الجمهورية التونسية</span>
       </div>
 

@@ -1,0 +1,333 @@
+<div class="leaves-wrapper animated-fade">
+  <div class="page-header">
+    <div class="header-title">
+      <h1>إدارة الرخص الاستثنائية</h1>
+      <p>تقديم طلبات الرخص الاستثنائية للأعوان، ومتابعة جدول الموافقات حسب السلم الإداري</p>
+    </div>
+    <button (click)="openLeaveModal()" class="btn btn-primary" *ngIf="isAgentRhOrAdmin()">
+      <i class="fa-solid fa-paper-plane"></i> تقديم طلب رخصة استثنائية
+    </button>
+  </div>
+
+  <div class="action-bar glass-card" style="display: flex; gap: 20px; align-items: center; padding: 15px 20px; margin-bottom: 20px; flex-wrap: wrap;">
+    <div class="search-box" style="flex: 1; min-width: 250px; position: relative;">
+      <i class="fa-solid fa-magnifying-glass search-icon" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none;"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="ابحث بالاسم أو المعرّف التسلسلي..."
+        [(ngModel)]="searchQuery"
+        style="padding-right: 36px; width: 100%;">
+    </div>
+    <div class="filter-checkboxes" style="display: flex; gap: 15px; align-items: center; margin-right: 15px;">
+      <span style="color: var(--text-secondary); font-size: 13px; font-weight: 700; margin-left: 5px;">تصفية حسب الحالة:</span>
+      <label style="display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13px; cursor: pointer;">
+        <input type="checkbox" [(ngModel)]="filterApproved"> موافق عليها نهائياً
+      </label>
+      <label style="display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13px; cursor: pointer;">
+        <input type="checkbox" [(ngModel)]="filterPending"> قيد الانتظار
+      </label>
+      <label style="display: flex; align-items: center; gap: 6px; color: #fff; font-size: 13px; cursor: pointer;">
+        <input type="checkbox" [(ngModel)]="filterRejected"> مرفوضة
+      </label>
+    </div>
+  </div>
+
+  <div class="glass-card list-container">
+    <div class="container-header">
+      <h3>طلبات الرخص الاستثنائية الواردة</h3>
+      <button (click)="fetchLeaves()" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-arrows-rotate"></i> تحديث
+      </button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="min-width: 70px;">المعرّف الوحيد</th>
+            <th (click)="setSort('name')" style="cursor: pointer; user-select: none;">
+              الموظف <i [class]="getSortIcon('name')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th (click)="setSort('grade')" style="cursor: pointer; user-select: none;">
+              الرتبة <i [class]="getSortIcon('grade')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th (click)="setSort('startDate')" style="cursor: pointer; user-select: none;">
+              من تاريخ <i [class]="getSortIcon('startDate')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th (click)="setSort('endDate')" style="cursor: pointer; user-select: none;">
+              إلى تاريخ <i [class]="getSortIcon('endDate')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th>المدة</th>
+            <th (click)="setSort('status')" style="cursor: pointer; user-select: none;">
+              الوضعية <i [class]="getSortIcon('status')" style="margin-right: 5px; font-size: 12px; opacity: 0.8;"></i>
+            </th>
+            <th>المرجع/السبب</th>
+            <th *ngIf="canApprove() || isAgentRh() || isSuperAdmin()">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of getSortedAndPaginatedLeaves()">
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <img [src]="getAvatar(l)" (click)="openImagePreview(l, $event)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0; cursor: pointer;" alt="Avatar">
+                <strong>{{ l.personnelRegistrationNumber }}</strong>
+              </div>
+            </td>
+            <td><strong>{{ l.personnelFullNameAr }}</strong><br><small>{{ l.personnelOrgUnitNameAr }}</small></td>
+            <td>{{ l.personnelGrade }}</td>
+            <td>{{ l.startDate }}</td>
+            <td>{{ l.endDate }}</td>
+            <td>
+              <span *ngIf="l.exceptionalLeaveType === 'TWO_HOURS'">ساعتان (2h)<br><small style="opacity: 0.8; color: var(--secondary);">[انطلاق: {{ l.startTime }}]</small></span>
+              <span *ngIf="l.exceptionalLeaveType === 'HALF_DAY'">نصف يوم (0.5)<br><small style="opacity: 0.8; color: var(--secondary);">[{{ l.session === 'MATINALE' ? 'حصة صباحية' : 'حصة مسائية' }}]</small></span>
+              <span *ngIf="l.exceptionalLeaveType === 'ONE_DAY'">يوم واحد (1)</span>
+              <span *ngIf="l.exceptionalLeaveType === 'TWO_DAYS'">يومان متتاليان (2)</span>
+              <span *ngIf="!l.exceptionalLeaveType">{{ l.duration }} يوم</span>
+            </td>
+            <td>
+              <span class="badge"
+                [class.badge-pending]="l.status === 'PENDING' || l.status.startsWith('APPROVED_')"
+                [class.badge-approved]="l.status === 'APPROVED'"
+                [class.badge-rejected]="l.status === 'REJECTED'">
+                {{ getStatusAr(l.status) }}
+              </span>
+            </td>
+            <td>{{ l.justification || 'لا يوجد' }}</td>
+            <td *ngIf="canApprove() || isAgentRh() || isSuperAdmin()">
+              <div class="action-buttons">
+                <!-- 1. Standard approval actions for Service/SD/Director -->
+                <ng-container *ngIf="canApprove() && (l.status === 'PENDING' || l.status === 'APPROVED_SERVICE' || l.status === 'APPROVED_SD')">
+                  <button (click)="updateStatus(l.id, getApprovalStatusForUser(), 'تمت الموافقة من قبل السلم الإداري')" class="btn-action btn-approve" title="موافقة">
+                    <i class="fa-solid fa-check"></i> موافقة
+                  </button>
+                  <button (click)="updateStatus(l.id, 'REJECTED', 'مرفوض من الإدارة')" class="btn-action btn-reject" title="رفض">
+                    <i class="fa-solid fa-xmark"></i> رفض
+                  </button>
+                </ng-container>
+
+                <!-- 2. Modification requests actions for Director -->
+                <ng-container *ngIf="isDirector() && l.status === 'PENDING_MODIFICATION'">
+                  <button (click)="updateStatus(l.id, 'APPROVED', 'تم قبول التعديل')" class="btn-action btn-approve" title="قبول التعديل">
+                    <i class="fa-solid fa-check-double"></i> قبول التعديل
+                  </button>
+                  <button (click)="updateStatus(l.id, 'APPROVED', 'تم رفض طلب التعديل')" class="btn-action btn-reject" title="رفض التعديل">
+                    <i class="fa-solid fa-xmark"></i> رفض التعديل
+                  </button>
+                </ng-container>
+
+                <!-- 3. Deletion requests actions for Director -->
+                <ng-container *ngIf="isDirector() && l.status === 'PENDING_DELETION'">
+                  <span style="color: var(--text-secondary); font-size: 12px;"><i class="fa-solid fa-ban"></i> الحذف ملغى</span>
+                </ng-container>
+
+                <!-- 4. Direct edit actions for Director (for approved/active leaves) -->
+                <ng-container *ngIf="isDirector() && (l.status === 'APPROVED' || l.status === 'LEAVE_STARTED' || l.status === 'WORK_RESUMED')">
+                  <button (click)="onEditLeave(l)" class="btn-action btn-edit" title="تعديل مباشر">
+                    <i class="fa-solid fa-pen-to-square"></i> تعديل
+                  </button>
+                </ng-container>
+
+                <!-- 5. Actions for HR Agent -->
+                <ng-container *ngIf="isAgentRh()">
+                  <ng-container *ngIf="l.status === 'PENDING' || l.status === 'APPROVED_SERVICE' || l.status === 'APPROVED_SD' || l.status === 'REJECTED'">
+                    <button (click)="onEditLeave(l)" class="btn-action btn-edit" title="تعديل">
+                      <i class="fa-solid fa-pen-to-square"></i> تعديل
+                    </button>
+                  </ng-container>
+
+                  <ng-container *ngIf="l.status === 'APPROVED'">
+                    <button (click)="onEditLeave(l)" class="btn-action btn-edit" title="طلب تعديل">
+                      <i class="fa-solid fa-pen-to-square"></i> طلب تعديل
+                    </button>
+                  </ng-container>
+                </ng-container>
+
+                <!-- 6. Deletion action for Super Admin -->
+                <ng-container *ngIf="isSuperAdmin()">
+                  <button (click)="onDeleteLeave(l.id)" class="btn-action btn-reject" title="حذف نهائي" style="background-color: #dc3545; border-color: #dc3545;">
+                    <i class="fa-solid fa-trash"></i> حذف
+                  </button>
+                </ng-container>
+              </div>
+              <span *ngIf="!canApprove() && !isAgentRh() && !isSuperAdmin()">--</span>
+            </td>
+          </tr>
+          <tr *ngIf="getFilteredLeaves().length === 0">
+            <td colspan="9" class="no-data">لا توجد طلبات رخص استثنائية مسجلة</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Section -->
+    <div class="pagination-container" *ngIf="getFilteredLeaves().length > 0">
+      <div class="pagination-info">
+        <span>عرض {{ (currentPage - 1) * pageSize + 1 }} - {{ getMin(currentPage * pageSize, getFilteredLeaves().length) }} من أصل {{ getFilteredLeaves().length }} رخصة استثنائية</span>
+      </div>
+      
+      <div class="pagination-controls">
+        <button class="btn btn-pagination" [disabled]="currentPage === 1" (click)="changePage(1)" title="الصفحة الأولى">
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+        <button class="btn btn-pagination" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)" title="الصفحة السابقة">
+          <i class="fa-solid fa-angle-right"></i>
+        </button>
+        
+        <button *ngFor="let page of getPageNumbers()" 
+                class="btn btn-pagination btn-page-num" 
+                [class.active]="page === currentPage" 
+                (click)="changePage(page)">
+          {{ page }}
+        </button>
+        
+        <button class="btn btn-pagination" [disabled]="currentPage === getTotalPages()" (click)="changePage(currentPage + 1)" title="الصفحة التالية">
+          <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <button class="btn btn-pagination" [disabled]="currentPage === getTotalPages()" (click)="changePage(getTotalPages())" title="الصفحة الأخيرة">
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+      </div>
+
+      <div class="pagination-size">
+        <label>الطلبات في الصفحة:</label>
+        <select class="form-control select-page-size" [(ngModel)]="pageSize" (change)="currentPage = 1">
+          <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Demande de Congé -->
+<div class="modal-overlay animated-fade" *ngIf="isLeaveModalOpen" (click)="closeLeaveModal()">
+  <div class="modal-card glass-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fa-solid fa-calendar-plus"></i> 
+        <span *ngIf="!isEditMode">تقديم طلب رخصة استثنائية جديدة</span>
+        <span *ngIf="isEditMode">تعديل طلب الرخصة الاستثنائية</span>
+      </h3>
+      <button (click)="closeLeaveModal()" class="btn-close">&times;</button>
+    </div>
+
+    <form (ngSubmit)="onSubmitRequest()" #leaveForm="ngForm" class="modal-form">
+      <div class="form-group" *ngIf="isAgentRhOrAdmin()">
+        <label class="form-label">الموظف المعني بالرخصة <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="personnelSearchQuery" placeholder="البحث بالمعرف أو الاسم..." [(ngModel)]="personnelSearchQuery" style="margin-bottom: 8px;">
+        <select class="form-control" name="personnelId" required [(ngModel)]="newRequest.personnelId">
+          <option [ngValue]="null" disabled>اختر الموظف (البحث أعلاه للفلترة)</option>
+          <option *ngFor="let p of filteredPersonnelList" [value]="p.id">
+            {{ p.registrationNumber }} - {{ p.firstNameAr }} <span *ngIf="p.fatherNameAr">{{ p.fatherNameAr }} </span>{{ p.lastNameAr }} ({{ p.grade }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+        <input type="date" class="form-control" name="startDate" required [(ngModel)]="newRequest.startDate" (ngModelChange)="calculateDates()">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="display: block; margin-bottom: 8px;">مدة الرخصة المطلوبة <span class="text-danger">*</span></label>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+          <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="exceptionalLeaveType" value="TWO_HOURS" [(ngModel)]="newRequest.exceptionalLeaveType" (ngModelChange)="calculateDates()">
+            ساعتان (2h)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="exceptionalLeaveType" value="HALF_DAY" [(ngModel)]="newRequest.exceptionalLeaveType" (ngModelChange)="calculateDates()">
+            نصف يوم (Demi-journée)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="exceptionalLeaveType" value="ONE_DAY" [(ngModel)]="newRequest.exceptionalLeaveType" (ngModelChange)="calculateDates()">
+            يوم واحد (1 Journée)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="exceptionalLeaveType" value="TWO_DAYS" [(ngModel)]="newRequest.exceptionalLeaveType" (ngModelChange)="calculateDates()">
+            يومان متتاليان (2 Journées successives)
+          </label>
+        </div>
+      </div>
+
+      <!-- Specific inputs based on selection -->
+      <!-- 1. Two hours start time -->
+      <div class="form-group animated-fade" *ngIf="newRequest.exceptionalLeaveType === 'TWO_HOURS'">
+        <label class="form-label">توقيت المغادرة <span class="text-danger">*</span></label>
+        <input type="time" class="form-control" name="startTime" required [(ngModel)]="newRequest.startTime">
+      </div>
+
+      <!-- 2. Half day session -->
+      <div class="form-group animated-fade" *ngIf="newRequest.exceptionalLeaveType === 'HALF_DAY'">
+        <label class="form-label" style="display: block; margin-bottom: 8px;">الحصة المعنية <span class="text-danger">*</span></label>
+        <div style="display: flex; gap: 20px;">
+          <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="session" value="MATINALE" [(ngModel)]="newRequest.session">
+            حصة صباحية (Séance matinale)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="session" value="APRES_MIDI" [(ngModel)]="newRequest.session">
+            حصة مسائية (Séance après-midi)
+          </label>
+        </div>
+        <div class="text-info-remark" *ngIf="newRequest.session === 'APRES_MIDI'" style="margin-top: 8px; font-size: 12px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 8px 12px; border-radius: 6px;">
+          <i class="fa-solid fa-circle-info"></i> تبدأ الحصة المسائية من الساعة 12:30 (La séance après-midi commence à partir de 12:30).
+        </div>
+      </div>
+
+      <div *ngIf="getLeaveDurationError()" class="text-danger error-msg-hint" style="font-size: 13px; margin-top: 5px; margin-bottom: 15px; font-weight: bold;">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ getLeaveDurationError() }}
+      </div>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">تاريخ النهاية</label>
+          <input type="date" class="form-control" name="endDate" readonly [ngModel]="newRequest.endDate" placeholder="تاريخ النهاية">
+        </div>
+        <div class="form-group" *ngIf="newRequest.exceptionalLeaveType !== 'TWO_HOURS' && newRequest.exceptionalLeaveType !== 'HALF_DAY'">
+          <label class="form-label">تاريخ استئناف العمل</label>
+          <input type="date" class="form-control" name="resumptionDate" readonly [ngModel]="newRequest.resumptionDate" placeholder="تاريخ الاستئناف">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">السبب / التبرير</label>
+        <textarea
+          class="form-control"
+          name="justification"
+          rows="3"
+          placeholder="أدخل مبرر الطلب"
+          [(ngModel)]="newRequest.justification"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">تحميل المرفقات</label>
+        <input type="text" class="form-control" name="doc" placeholder="أدخل اسم الملف أو مسار الوثيقة" [(ngModel)]="newRequest.documentPath">
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" (click)="closeLeaveModal()" class="btn btn-secondary">إلغاء</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!isLeaveFormValid()">
+          <i class="fa-solid fa-paper-plane"></i> 
+          <span *ngIf="!isEditMode">إرسال الطلب</span>
+          <span *ngIf="isEditMode">حفظ التعديلات</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Image Preview -->
+<div class="modal-overlay animated-fade image-preview-overlay" *ngIf="imagePreviewPersonnel" (click)="imagePreviewPersonnel = null">
+  <div class="image-preview-card glass-card" (click)="$event.stopPropagation()">
+    <button (click)="imagePreviewPersonnel = null" class="btn-close image-preview-close">&times;</button>
+    <div class="image-preview-content">
+      <img [src]="getAvatar(imagePreviewPersonnel)" class="image-preview-full" alt="صورة الملف الشخصي">
+      <div class="image-preview-info">
+        <h3>{{ imagePreviewPersonnel.firstNameAr }} {{ imagePreviewPersonnel.lastNameAr }}</h3>
+        <p>{{ imagePreviewPersonnel.firstNameFr }} {{ imagePreviewPersonnel.lastNameFr }}</p>
+        <span class="badge-grade">{{ imagePreviewPersonnel.grade }}</span>
+      </div>
+    </div>
+  </div>
+</div>

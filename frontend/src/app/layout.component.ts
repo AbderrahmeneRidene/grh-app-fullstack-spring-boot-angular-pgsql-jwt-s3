@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,13 +12,14 @@ import { AuthService } from './auth/auth.service';
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.css'
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit {
   user: any;
   currentAdminName = 'المدرسة الوطنية لتكوين إطارات الأمن الوطني والشرطة الوطنية بصلامبو';
 
   isDropdownOpen = false;
   isProfileModalOpen = false;
   isEditingAccount = false;
+  isMobileSidebarOpen = false;
   activeTab = 'info';
   profileDetails: any = null;
   academicList: any[] = [];
@@ -36,10 +37,28 @@ export class LayoutComponent {
   showNewPassword = false;
   showConfirmPassword = false;
 
-  constructor(private authService: AuthService, private router: Router, private http: HttpClient) {
+  isLeavesMenuOpen = false;
+
+  constructor(public authService: AuthService, private router: Router, private http: HttpClient) {
     this.authService.currentUser$.subscribe(u => {
       this.user = u;
     });
+  }
+
+  ngOnInit(): void {
+    if (this.isLeavesMenuActive()) {
+      this.isLeavesMenuOpen = true;
+    }
+  }
+
+  toggleLeavesMenu(event: Event): void {
+    if (event) event.stopPropagation();
+    this.isLeavesMenuOpen = !this.isLeavesMenuOpen;
+  }
+
+  isLeavesMenuActive(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/annual-leaves') || url.startsWith('/exceptional-leaves') || url.startsWith('/sick-leaves');
   }
 
   canManageOrg(): boolean {
@@ -68,6 +87,10 @@ export class LayoutComponent {
            this.authService.hasRole('ROLE_AGENT_RH');
   }
 
+  isSuperAdmin(): boolean {
+    return this.authService.hasRole('ROLE_SUPER_ADMIN');
+  }
+
   logout(): void {
     this.isDropdownOpen = false;
     this.authService.logout();
@@ -77,7 +100,13 @@ export class LayoutComponent {
   getAvatar(user: any): string {
     if (!user) return 'assets/avatar_default.png';
     if (user.profilePicture) {
-      return user.profilePicture;
+      let url = user.profilePicture;
+      if (url.includes('minio:9000/')) {
+        url = '/' + url.split('minio:9000/')[1];
+      } else if (url.includes('localhost:9000/') && window.location.port !== '4200') {
+        url = '/' + url.split('localhost:9000/')[1];
+      }
+      return url;
     }
     const gender = user.gender;
     if (gender === 'MALE') return 'assets/avatar_male.png';
@@ -94,6 +123,13 @@ export class LayoutComponent {
   // Close dropdown globally
   closeDropdown(): void {
     this.isDropdownOpen = false;
+    this.isMobileSidebarOpen = false;
+  }
+
+  // Toggle mobile sidebar
+  toggleMobileSidebar(event?: Event): void {
+    if (event) event.stopPropagation();
+    this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
   }
 
   // Open profile modal

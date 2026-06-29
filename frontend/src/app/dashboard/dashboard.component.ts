@@ -65,7 +65,7 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) {}
 
@@ -249,8 +249,15 @@ export class DashboardComponent implements OnInit {
   getAvatar(p: any): string {
     if (!p) return 'assets/avatar_default.png';
     // Si c'est un leave, p peut avoir personnelProfilePicture
-    if (p.personnelProfilePicture) return p.personnelProfilePicture;
-    if (p.profilePicture) return p.profilePicture;
+    let pic = p.personnelProfilePicture || p.profilePicture;
+    if (pic) {
+      if (pic.includes('minio:9000/')) {
+        pic = '/' + pic.split('minio:9000/')[1];
+      } else if (pic.includes('localhost:9000/') && window.location.port !== '4200') {
+        pic = '/' + pic.split('localhost:9000/')[1];
+      }
+      return pic;
+    }
     const gender = p.personnelGender || p.gender;
     if (gender === 'MALE') return 'assets/avatar_male.png';
     if (gender === 'FEMALE') return 'assets/avatar_female.png';
