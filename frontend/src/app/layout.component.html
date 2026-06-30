@@ -7,30 +7,59 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item" *ngIf="canViewDashboard()">
-        <i class="fa-solid fa-chart-line icon"></i>
-        <span>لوحة القيادة</span>
-      </a>
+      <!-- لوحة القيادة مع قائمة منسدلة لتصفح الأقسام -->
+      <div class="nav-dropdown" *ngIf="canViewDashboard()">
+        <button type="button" class="nav-item nav-dropdown-toggle" (click)="toggleDashboardMenu($event)" [class.active]="isDashboardActive()">
+          <i class="fa-solid fa-chart-line icon"></i>
+          <span>لوحة القيادة</span>
+          <i class="fa-solid fa-chevron-down arrow-icon" [class.open]="isDashboardMenuOpen"></i>
+        </button>
+        
+        <div class="nav-dropdown-menu" [class.open]="isDashboardMenuOpen">
+          <a (click)="navigateToDashboardSection('dashboard-start', $event)" class="nav-sub-item" style="cursor: pointer;">
+            <i class="fa-solid fa-sitemap sub-icon"></i>
+            <span>المؤشرات الهيكلية والرتبية</span>
+          </a>
+          <a (click)="navigateToDashboardSection('demographic-stats-section', $event)" class="nav-sub-item" style="cursor: pointer;">
+            <i class="fa-solid fa-venus-mars sub-icon"></i>
+            <span>التوزيع الديموغرافي والأعمار</span>
+          </a>
+          <a (click)="navigateToDashboardSection('active-leaves-stats-section', $event)" class="nav-sub-item" style="cursor: pointer;">
+            <i class="fa-solid fa-calendar-check sub-icon"></i>
+            <span>العطل والإجازات النشطة اليوم</span>
+          </a>
+        </div>
+      </div>
 
       <a routerLink="/organization" routerLinkActive="active" class="nav-item">
         <i class="fa-solid fa-sitemap icon"></i>
         <span>الهيكل التنظيمي</span>
       </a>
 
-      <a routerLink="/personnel" routerLinkActive="active" class="nav-item" *ngIf="canViewPersonnel()">
-        <i class="fa-solid fa-users-gear icon"></i>
-        <span>إدارة الموظفين</span>
-      </a>
-
-      <a routerLink="/archive" routerLinkActive="active" class="nav-item" *ngIf="canViewArchive()">
-        <i class="fa-solid fa-box-archive icon"></i>
-        <span>أرشيف الموظفين</span>
-      </a>
+      <!-- ملفات الأعوان والموظفين مع قائمة منسدلة -->
+      <div class="nav-dropdown" *ngIf="canViewPersonnel() || canViewArchive()">
+        <button type="button" class="nav-item nav-dropdown-toggle" (click)="togglePersonnelMenu($event)" [class.active]="isPersonnelMenuActive()">
+          <i class="fa-solid fa-users-gear icon"></i>
+          <span>ملفات الموظفين</span>
+          <i class="fa-solid fa-chevron-down arrow-icon" [class.open]="isPersonnelMenuOpen"></i>
+        </button>
+        
+        <div class="nav-dropdown-menu" [class.open]="isPersonnelMenuOpen">
+          <a routerLink="/personnel" routerLinkActive="active" class="nav-sub-item" *ngIf="canViewPersonnel()">
+            <i class="fa-solid fa-address-card sub-icon"></i>
+            <span>عرض الملفات</span>
+          </a>
+          <a routerLink="/archive" routerLinkActive="active" class="nav-sub-item" *ngIf="canViewArchive()">
+            <i class="fa-solid fa-box-archive sub-icon"></i>
+            <span>الملفات المودعة بالأرشيف</span>
+          </a>
+        </div>
+      </div>
 
       <div class="nav-dropdown" *ngIf="canManageLeaves()">
         <button type="button" class="nav-item nav-dropdown-toggle" (click)="toggleLeavesMenu($event)" [class.active]="isLeavesMenuActive()">
           <i class="fa-solid fa-calendar-days icon"></i>
-          <span>إدارة الرخص والإجازات</span>
+          <span>الرخص والإجازات</span>
           <i class="fa-solid fa-chevron-down arrow-icon" [class.open]="isLeavesMenuOpen"></i>
         </button>
         
@@ -89,32 +118,38 @@
         <span class="sub-brand">وزارة الداخلية - الجمهورية التونسية</span>
       </div>
 
-      <div class="user-profile" *ngIf="user" (click)="toggleDropdown($event)">
-        <div class="profile-info">
-          <span class="user-name">
-            {{ user.fullNameAr }}
-            <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-right: 4px;"></i>
-          </span>
-          <span class="user-role">
-            <i class="fa-solid fa-shield-halved"></i>
-            {{ user.grade || 'إداري' }} | {{ user.orgUnitNameAr || 'الإدارة العامة' }}
-          </span>
-        </div>
-        <div class="avatar" style="overflow: hidden; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
-          <img [src]="getAvatar(user)" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button class="btn-fullscreen-toggle" (click)="toggleFullscreen($event)" [title]="isFullscreenActive ? 'خروج من ملء الشاشة' : 'ملء الشاشة'" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition);">
+          <i class="fa-solid" [ngClass]="isFullscreenActive ? 'fa-compress' : 'fa-expand'" style="font-size: 16px;"></i>
+        </button>
 
-        <!-- Dropdown Menu -->
-        <div class="profile-dropdown-menu" *ngIf="isDropdownOpen" (click)="$event.stopPropagation()">
-          <button class="dropdown-item" (click)="openProfileModal($event)">
-            <i class="fa-solid fa-id-card"></i>
-            <span>بيانات الحساب</span>
-          </button>
-          <div class="dropdown-divider"></div>
-          <button class="dropdown-item text-danger" (click)="logout()">
-            <i class="fa-solid fa-power-off"></i>
-            <span>تسجيل الخروج</span>
-          </button>
+        <div class="user-profile" *ngIf="user" (click)="toggleDropdown($event)">
+          <div class="profile-info">
+            <span class="user-name">
+              {{ user.fullNameAr }}
+              <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-right: 4px;"></i>
+            </span>
+            <span class="user-role">
+              <i class="fa-solid fa-shield-halved"></i>
+              {{ user.grade || 'إداري' }} | {{ user.orgUnitNameAr || 'الإدارة العامة' }}
+            </span>
+          </div>
+          <div class="avatar" style="overflow: hidden; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
+            <img [src]="getAvatar(user)" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+
+          <!-- Dropdown Menu -->
+          <div class="profile-dropdown-menu" *ngIf="isDropdownOpen" (click)="$event.stopPropagation()">
+            <button class="dropdown-item" (click)="openProfileModal($event)">
+              <i class="fa-solid fa-id-card"></i>
+              <span>بيانات الحساب</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item text-danger" (click)="logout()">
+              <i class="fa-solid fa-power-off"></i>
+              <span>تسجيل الخروج</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -327,6 +362,27 @@
         <p *ngIf="profileDetails">{{ profileDetails.registrationNumber }} - {{ profileDetails.grade }}</p>
         <p *ngIf="!profileDetails">{{ user?.username }} - مدير النظام</p>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Fullscreen Recommendation Prompt -->
+<div class="modal-overlay animated-fade" *ngIf="showFullscreenPrompt" (click)="closeFullscreenPrompt()" style="z-index: 2500;">
+  <div class="modal-card glass-card" (click)="$event.stopPropagation()" style="max-width: 480px; text-align: center; padding: 30px;">
+    <div style="font-size: 50px; color: var(--primary); margin-bottom: 20px;">
+      <i class="fa-solid fa-expand"></i>
+    </div>
+    <h3 style="color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 12px;">تنبيه لتحسين تجربة الاستخدام</h3>
+    <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+      للاستمتاع بتجربة تصفح ممتعة وتفاعلية متكاملة، ننصحك بالانتقال إلى وضع ملء الشاشة (Plein écran).
+    </p>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <button class="btn btn-primary" (click)="enableFullscreenFromPrompt()" style="width: 100%;">
+        <i class="fa-solid fa-expand"></i> تفعيل ملء الشاشة الآن
+      </button>
+      <button class="btn btn-secondary" (click)="closeFullscreenPrompt()" style="width: 100%;">
+        إغلاق وتخطي
+      </button>
     </div>
   </div>
 </div>

@@ -613,10 +613,51 @@
 
 .active-leaves-counters {
   grid-template-columns: repeat(3, 1fr) !important;
-  margin-top: 25px;
 }
+
 @media (max-width: 992px) {
   .active-leaves-counters {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Dashboard sections centered titles & separators */
+.dashboard-section-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  margin: 25px 0 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dashboard-section-title i {
+  color: var(--primary);
+  font-size: 20px;
+}
+
+.dashboard-section-subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 25px;
+}
+
+.dashboard-section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color) 20%, var(--border-color) 80%, transparent);
+  margin: 35px 0;
+  border: none;
+}
+
+/* Layout pour les listes de congés actifs (empilement vertical avec espace) */
+.active-leaves-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px; /* Espace vertical de 30px entre les listes d'agents */
+  width: 100%;
+  margin-top: 30px;
 }

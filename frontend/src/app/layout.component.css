@@ -585,7 +585,7 @@
   margin-top: 4px;
 }
 .nav-dropdown-menu.open {
-  max-height: 200px; /* enough to contain 3 items */
+  max-height: 300px; /* enough to contain wrapped items */
 }
 .nav-sub-item {
   display: flex;
@@ -597,6 +597,7 @@
   border-radius: 6px;
   font-weight: 600;
   font-size: 14px;
+  line-height: 1.4;
   transition: var(--transition);
 }
 .nav-sub-item:hover {
@@ -616,5 +617,10 @@
 }
 .nav-sub-item.active .sub-icon {
   color: var(--primary);
+}
+
+.btn-fullscreen-toggle:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  transform: scale(1.08);
 }
 

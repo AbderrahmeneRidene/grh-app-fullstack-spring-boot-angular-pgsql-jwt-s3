@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -39,6 +39,10 @@ export class LayoutComponent implements OnInit {
 
   isLeavesMenuOpen = false;
   isMyLeavesMenuOpen = false;
+  isDashboardMenuOpen = false;
+  isPersonnelMenuOpen = false;
+  showFullscreenPrompt = false;
+  isFullscreenActive = false;
 
   constructor(public authService: AuthService, private router: Router, private http: HttpClient) {
     this.authService.currentUser$.subscribe(u => {
@@ -53,6 +57,50 @@ export class LayoutComponent implements OnInit {
     if (this.isMyLeavesMenuActive()) {
       this.isMyLeavesMenuOpen = true;
     }
+    if (this.isDashboardActive()) {
+      this.isDashboardMenuOpen = true;
+    }
+    if (this.isPersonnelMenuActive()) {
+      this.isPersonnelMenuOpen = true;
+    }
+
+    this.isFullscreenActive = this.isFullscreen();
+
+    // Check if prompt has been shown in the current session
+    const shown = sessionStorage.getItem('fullscreenPromptShown');
+    if (!shown && this.authService.isLoggedIn() && !this.isFullscreen()) {
+      this.showFullscreenPrompt = true;
+    }
+  }
+
+  @HostListener('document:fullscreenchange', ['$event'])
+  onFullscreenChange(): void {
+    this.isFullscreenActive = !!document.fullscreenElement;
+  }
+
+  isFullscreen(): boolean {
+    return !!document.fullscreenElement;
+  }
+
+  toggleFullscreen(event?: Event): void {
+    if (event) event.stopPropagation();
+    if (this.isFullscreen()) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error('Error attempting to enable fullscreen:', err);
+      });
+    }
+  }
+
+  enableFullscreenFromPrompt(): void {
+    this.toggleFullscreen();
+    this.closeFullscreenPrompt();
+  }
+
+  closeFullscreenPrompt(): void {
+    this.showFullscreenPrompt = false;
+    sessionStorage.setItem('fullscreenPromptShown', 'true');
   }
 
   toggleLeavesMenu(event: Event): void {
@@ -73,6 +121,48 @@ export class LayoutComponent implements OnInit {
   isMyLeavesMenuActive(): boolean {
     const url = this.router.url;
     return url.startsWith('/my-annual-leaves') || url.startsWith('/my-exceptional-leaves');
+  }
+
+  togglePersonnelMenu(event: Event): void {
+    if (event) event.stopPropagation();
+    this.isPersonnelMenuOpen = !this.isPersonnelMenuOpen;
+  }
+
+  isPersonnelMenuActive(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/personnel') || url.startsWith('/archive');
+  }
+
+  toggleDashboardMenu(event: Event): void {
+    if (event) event.stopPropagation();
+    this.isDashboardMenuOpen = !this.isDashboardMenuOpen;
+  }
+
+  isDashboardActive(): boolean {
+    const url = this.router.url;
+    return url === '/' || url === '/#';
+  }
+
+  navigateToDashboardSection(sectionId: string, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (this.isDashboardActive()) {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      this.router.navigate(['/']).then(() => {
+        setTimeout(() => {
+          const el = document.getElementById(sectionId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+      });
+    }
   }
 
   canManageOrg(): boolean {
@@ -107,6 +197,7 @@ export class LayoutComponent implements OnInit {
 
   logout(): void {
     this.isDropdownOpen = false;
+    sessionStorage.removeItem('fullscreenPromptShown');
     this.authService.logout();
     this.router.navigate(['/login']);
   }

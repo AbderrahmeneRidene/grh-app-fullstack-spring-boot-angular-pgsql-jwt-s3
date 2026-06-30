@@ -1,4 +1,4 @@
-<div class="dashboard-wrapper">
+<div class="dashboard-wrapper" id="dashboard-start">
   <div class="animated-fade" style="display: flex; flex-direction: column; gap: 30px; width: 100%;">
     <div class="welcome-header"
       style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -12,6 +12,13 @@
         <span>تصدير وطباعة البيانات</span>
       </button>
     </div>
+
+    <!-- ==================== القسم الأول: المؤشرات الهيكلية والرتبية ==================== -->
+    <div id="structural-stats-section" class="dashboard-section-title">
+      <i class="fa-solid fa-sitemap"></i>
+      <span>المؤشرات الهيكلية والرتبية والأعوان</span>
+    </div>
+    <div class="dashboard-section-subtitle">إحصاءات إجمالي الأعوان وتوزيعهم حسب الهياكل والمصالح الإدارية والدرجات الوظيفية</div>
 
     <!-- المؤشرات الهيكلية العامة -->
     <div class="stats-grid">
@@ -32,37 +39,7 @@
       </div>
     </div>
 
-    <!-- مؤشرات الإجازات النشطة اليوم -->
-    <div class="stats-grid active-leaves-counters">
-      <div class="glass-card stat-card border-blue clickable-card" (click)="scrollToSection('active-annual-section')"
-        style="cursor: pointer;">
-        <div class="stat-icon bg-blue-dim"><i class="fa-solid fa-umbrella-beach"></i></div>
-        <div class="stat-content">
-          <span class="stat-label">إجازات سنوية نشطة اليوم</span>
-          <h2 class="stat-number">{{ stats?.activeAnnualLeaves?.length || 0 }}</h2>
-        </div>
-      </div>
-
-      <div class="glass-card stat-card border-yellow clickable-card"
-        (click)="scrollToSection('active-exceptional-section')" style="cursor: pointer;">
-        <div class="stat-icon bg-yellow-dim"><i class="fa-solid fa-file-circle-plus"></i></div>
-        <div class="stat-content">
-          <span class="stat-label">رخص استثنائية نشطة اليوم</span>
-          <h2 class="stat-number">{{ stats?.activeExceptionalLeaves?.length || 0 }}</h2>
-        </div>
-      </div>
-
-      <div class="glass-card stat-card border-red clickable-card" (click)="scrollToSection('active-sick-section')"
-        style="cursor: pointer;">
-        <div class="stat-icon bg-red-dim"><i class="fa-solid fa-house-medical"></i></div>
-        <div class="stat-content">
-          <span class="stat-label">إجازات مرضية نشطة اليوم</span>
-          <h2 class="stat-number">{{ stats?.activeSickLeaves?.length || 0 }}</h2>
-        </div>
-      </div>
-    </div>
-
-    <!-- Graphiques / Listes détaillées -->
+    <!-- الرسوم والنسب للهياكل والتبويبات -->
     <div class="details-grid">
       <!-- Distribution par structures -->
       <div class="glass-card detail-box">
@@ -111,8 +88,16 @@
       </div>
     </div>
 
-    <!-- Graphiques additionnels (Genre & Âge) -->
-    <div class="details-grid" style="margin-top: 30px;">
+    <div class="dashboard-section-divider"></div>
+
+    <!-- ==================== القسم الثاني: التوزيع الديموغرافي والأعمار ==================== -->
+    <div id="demographic-stats-section" class="dashboard-section-title">
+      <i class="fa-solid fa-venus-mars"></i>
+      <span>التوزيع الديموغرافي والفئات العمرية</span>
+    </div>
+    <div class="dashboard-section-subtitle">إحصاءات توزيع الأعوان حسب الفئات الرتبية، الجنس، والأعمار</div>
+
+    <div class="details-grid">
       <!-- توزيع الأعوان حسب الفئات الرتبية -->
       <div class="glass-card detail-box">
         <div class="box-header">
@@ -133,7 +118,7 @@
             </div>
             <div class="gender-legend">
               <div class="legend-item">
-                <div class="legend-dot female" style="background: var(--primary); box-shadow: 0 0 8px var(--primary);">
+                <div class="legend-dot" style="background: var(--primary); box-shadow: 0 0 8px var(--primary); width: 12px; height: 12px; border-radius: 50%;">
                 </div>
                 <div class="legend-info">
                   <span class="legend-name">ضباط سامون</span>
@@ -141,8 +126,8 @@
                 </div>
               </div>
               <div class="legend-item">
-                <div class="legend-dot male"
-                  style="background: var(--secondary); box-shadow: 0 0 8px var(--secondary);"></div>
+                <div class="legend-dot"
+                  style="background: var(--secondary); box-shadow: 0 0 8px var(--secondary); width: 12px; height: 12px; border-radius: 50%;"></div>
                 <div class="legend-info">
                   <span class="legend-name">ضباط أعوان</span>
                   <span class="legend-val">{{ juniorCount }} عون ({{ juniorPercent }}%)</span>
@@ -161,6 +146,7 @@
           </div>
         </div>
       </div>
+
       <!-- Distribution par genre -->
       <div class="glass-card detail-box">
         <div class="box-header">
@@ -222,146 +208,168 @@
       </div>
     </div>
 
-    <!-- الأعوان في عطلة سنوية حاليا -->
-    <div id="active-annual-section" class="glass-card" style="margin-top: 30px; padding: 24px;">
-      <div class="box-header" style="margin-bottom: 15px;">
-        <h3><i class="fa-solid fa-umbrella-beach" style="margin-left: 8px; color: var(--secondary);"></i>الأعوان في عطلة
-          سنوية حالياً</h3>
-        <span class="badge-duration" style="background: rgba(37, 99, 235, 0.15); color: var(--secondary);">{{
-          stats?.activeAnnualLeaves?.length || 0 }} عون</span>
-      </div>
-      <div class="table-box">
-        <div *ngIf="!stats?.activeAnnualLeaves || stats.activeAnnualLeaves.length === 0" class="no-data"
-          style="padding: 20px 0;">
-          لا يوجد أعوان في عطلة سنوية حالياً
+    <div class="dashboard-section-divider"></div>
+
+    <!-- ==================== القسم الثالث: العطل والإجازات النشطة اليوم ==================== -->
+    <div id="active-leaves-stats-section" class="dashboard-section-title">
+      <i class="fa-solid fa-calendar-check"></i>
+      <span>العطل والإجازات النشطة اليوم</span>
+    </div>
+    <div class="dashboard-section-subtitle">متابعة إحصائية وقوائم تفصيلية فورية للأعوان في عطل ورخص نشطة حالياً</div>
+
+    <!-- مؤشرات الإجازات النشطة اليوم -->
+    <div class="stats-grid active-leaves-counters">
+      <div class="glass-card stat-card border-blue clickable-card" (click)="scrollToSection('active-annual-section')"
+        style="cursor: pointer;">
+        <div class="stat-icon bg-blue-dim"><i class="fa-solid fa-umbrella-beach"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">إجازات سنوية نشطة اليوم</span>
+          <h2 class="stat-number">{{ stats?.activeAnnualLeaves?.length || 0 }}</h2>
         </div>
-        <table class="data-table" *ngIf="stats?.activeAnnualLeaves && stats.activeAnnualLeaves.length > 0">
-          <thead>
-            <tr>
-              <th>المعرف</th>
-              <th style="text-align: center;">الصورة</th>
-              <th>الاسم واللقب</th>
-              <th>المصلحة</th>
-              <th>تاريخ بداية العطلة</th>
-              <th style="text-align: center;">المدة</th>
-              <th>تاريخ استئناف العمل</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let leave of stats.activeAnnualLeaves">
-              <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
-              <td style="text-align: center;">
-                <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable"
-                  style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;"
-                  alt="Avatar">
-              </td>
-              <td style="font-weight: 600;">
-                {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
-                  leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
-              </td>
-              <td>{{ leave.personnelOrgUnitNameAr }}</td>
-              <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-              <td style="text-align: center;"><span class="badge-duration">{{ leave.duration }} يوم</span></td>
-              <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
-            </tr>
-          </tbody>
-        </table>
+      </div>
+
+      <div class="glass-card stat-card border-yellow clickable-card"
+        (click)="scrollToSection('active-exceptional-section')" style="cursor: pointer;">
+        <div class="stat-icon bg-yellow-dim"><i class="fa-solid fa-file-circle-plus"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">رخص استثنائية نشطة اليوم</span>
+          <h2 class="stat-number">{{ stats?.activeExceptionalLeaves?.length || 0 }}</h2>
+        </div>
+      </div>
+
+      <div class="glass-card stat-card border-red clickable-card" (click)="scrollToSection('active-sick-section')"
+        style="cursor: pointer;">
+        <div class="stat-icon bg-red-dim"><i class="fa-solid fa-house-medical"></i></div>
+        <div class="stat-content">
+          <span class="stat-label">إجازات مرضية نشطة اليوم</span>
+          <h2 class="stat-number">{{ stats?.activeSickLeaves?.length || 0 }}</h2>
+        </div>
       </div>
     </div>
 
-    <!-- الأعوان في رخصة استثنائية حاليا -->
-    <div id="active-exceptional-section" class="glass-card" style="margin-top: 30px; padding: 24px;">
-      <div class="box-header" style="margin-bottom: 15px;">
-        <h3><i class="fa-solid fa-file-circle-plus" style="margin-left: 8px; color: var(--warning);"></i>الأعوان في رخصة
-          استثنائية حالياً</h3>
-        <span class="badge-duration" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">{{
-          stats?.activeExceptionalLeaves?.length || 0 }} عون</span>
-      </div>
-      <div class="table-box">
-        <div *ngIf="!stats?.activeExceptionalLeaves || stats.activeExceptionalLeaves.length === 0" class="no-data"
-          style="padding: 20px 0;">
-          لا يوجد أعوان في رخصة استثنائية حالياً
+    <!-- قوائم الأعوان في عطلة حاليا (side-by-side) -->
+    <div class="active-leaves-container">
+      <!-- الأعوان في عطلة سنوية حاليا -->
+      <div id="active-annual-section" class="glass-card" style="padding: 24px;">
+        <div class="box-header" style="margin-bottom: 15px;">
+          <h3><i class="fa-solid fa-umbrella-beach" style="margin-left: 8px; color: var(--secondary);"></i>الأعوان في عطلة سنوية حالياً</h3>
+          <span class="badge-duration" style="background: rgba(37, 99, 235, 0.15); color: var(--secondary);">{{ stats?.activeAnnualLeaves?.length || 0 }} عون</span>
         </div>
-        <table class="data-table" *ngIf="stats?.activeExceptionalLeaves && stats.activeExceptionalLeaves.length > 0">
-          <thead>
-            <tr>
-              <th>المعرف</th>
-              <th style="text-align: center;">الصورة</th>
-              <th>الاسم واللقب</th>
-              <th>المصلحة</th>
-              <th>تاريخ بداية الرخصة</th>
-              <th style="text-align: center;">المدة</th>
-              <th>تاريخ استئناف العمل</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let leave of stats.activeExceptionalLeaves">
-              <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
-              <td style="text-align: center;">
-                <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable"
-                  style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;"
-                  alt="Avatar">
-              </td>
-              <td style="font-weight: 600;">
-                {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
-                  leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
-              </td>
-              <td>{{ leave.personnelOrgUnitNameAr }}</td>
-              <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-              <td style="text-align: center;"><span class="badge-duration"
-                  style="background: rgba(245,158,11,0.15); color: var(--warning);">{{ leave.duration }} يوم</span></td>
-              <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-box">
+          <div *ngIf="!stats?.activeAnnualLeaves || stats.activeAnnualLeaves.length === 0" class="no-data" style="padding: 20px 0;">
+            لا يوجد أعوان في عطلة سنوية حالياً
+          </div>
+          <table class="data-table" *ngIf="stats?.activeAnnualLeaves && stats.activeAnnualLeaves.length > 0">
+            <thead>
+              <tr>
+                <th>المعرف</th>
+                <th style="text-align: center;">الصورة</th>
+                <th>الاسم واللقب</th>
+                <th>المصلحة</th>
+                <th>تاريخ بداية العطلة</th>
+                <th style="text-align: center;">المدة</th>
+                <th>تاريخ استئناف العمل</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let leave of stats.activeAnnualLeaves">
+                <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
+                <td style="text-align: center;">
+                  <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" alt="Avatar">
+                </td>
+                <td style="font-weight: 600;">
+                  {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+                </td>
+                <td>{{ leave.personnelOrgUnitNameAr }}</td>
+                <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+                <td style="text-align: center;"><span class="badge-duration">{{ leave.duration }} يوم</span></td>
+                <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- الأعوان في عطلة مرضية حاليا -->
-    <div id="active-sick-section" class="glass-card" style="margin-top: 30px; padding: 24px;">
-      <div class="box-header" style="margin-bottom: 15px;">
-        <h3><i class="fa-solid fa-house-medical" style="margin-left: 8px; color: var(--primary);"></i>الأعوان في عطلة
-          مرضية حالياً</h3>
-        <span class="badge-duration" style="background: rgba(220, 38, 38, 0.15); color: var(--primary);">{{
-          stats?.activeSickLeaves?.length || 0 }} عون</span>
-      </div>
-      <div class="table-box">
-        <div *ngIf="!stats?.activeSickLeaves || stats.activeSickLeaves.length === 0" class="no-data"
-          style="padding: 20px 0;">
-          لا يوجد أعوان في عطلة مرضية حالياً
+      <!-- الأعوان في رخصة استثنائية حاليا -->
+      <div id="active-exceptional-section" class="glass-card" style="padding: 24px;">
+        <div class="box-header" style="margin-bottom: 15px;">
+          <h3><i class="fa-solid fa-file-circle-plus" style="margin-left: 8px; color: var(--warning);"></i>الأعوان في رخصة استثنائية حالياً</h3>
+          <span class="badge-duration" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">{{ stats?.activeExceptionalLeaves?.length || 0 }} عون</span>
         </div>
-        <table class="data-table" *ngIf="stats?.activeSickLeaves && stats.activeSickLeaves.length > 0">
-          <thead>
-            <tr>
-              <th>المعرف</th>
-              <th style="text-align: center;">الصورة</th>
-              <th>الاسم واللقب</th>
-              <th>المصلحة</th>
-              <th>تاريخ بداية العطلة</th>
-              <th style="text-align: center;">المدة</th>
-              <th>تاريخ استئناف العمل</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let leave of stats.activeSickLeaves">
-              <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
-              <td style="text-align: center;">
-                <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable"
-                  style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;"
-                  alt="Avatar">
-              </td>
-              <td style="font-weight: 600;">
-                {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{
-                  leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
-              </td>
-              <td>{{ leave.personnelOrgUnitNameAr }}</td>
-              <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-              <td style="text-align: center;"><span class="badge-duration"
-                  style="background: rgba(220,38,38,0.15); color: var(--primary);">{{ leave.duration }} يوم</span></td>
-              <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-box">
+          <div *ngIf="!stats?.activeExceptionalLeaves || stats.activeExceptionalLeaves.length === 0" class="no-data" style="padding: 20px 0;">
+            لا يوجد أعوان في رخصة استثنائية حالياً
+          </div>
+          <table class="data-table" *ngIf="stats?.activeExceptionalLeaves && stats.activeExceptionalLeaves.length > 0">
+            <thead>
+              <tr>
+                <th>المعرف</th>
+                <th style="text-align: center;">الصورة</th>
+                <th>الاسم واللقب</th>
+                <th>المصلحة</th>
+                <th>تاريخ بداية الرخصة</th>
+                <th style="text-align: center;">المدة</th>
+                <th>تاريخ استئناف العمل</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let leave of stats.activeExceptionalLeaves">
+                <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
+                <td style="text-align: center;">
+                  <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" alt="Avatar">
+                </td>
+                <td style="font-weight: 600;">
+                  {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+                </td>
+                <td>{{ leave.personnelOrgUnitNameAr }}</td>
+                <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+                <td style="text-align: center;"><span class="badge-duration" style="background: rgba(245,158,11,0.15); color: var(--warning);">{{ leave.duration }} يوم</span></td>
+                <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- الأعوان في عطلة مرضية حاليا -->
+      <div id="active-sick-section" class="glass-card" style="padding: 24px;">
+        <div class="box-header" style="margin-bottom: 15px;">
+          <h3><i class="fa-solid fa-house-medical" style="margin-left: 8px; color: var(--primary);"></i>الأعوان في عطلة مرضية حالياً</h3>
+          <span class="badge-duration" style="background: rgba(220, 38, 38, 0.15); color: var(--primary);">{{ stats?.activeSickLeaves?.length || 0 }} عون</span>
+        </div>
+        <div class="table-box">
+          <div *ngIf="!stats?.activeSickLeaves || stats.activeSickLeaves.length === 0" class="no-data" style="padding: 20px 0;">
+            لا يوجد أعوان في عطلة مرضية حالياً
+          </div>
+          <table class="data-table" *ngIf="stats?.activeSickLeaves && stats.activeSickLeaves.length > 0">
+            <thead>
+              <tr>
+                <th>المعرف</th>
+                <th style="text-align: center;">الصورة</th>
+                <th>الاسم واللقب</th>
+                <th>المصلحة</th>
+                <th>تاريخ بداية العطلة</th>
+                <th style="text-align: center;">المدة</th>
+                <th>تاريخ استئناف العمل</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let leave of stats.activeSickLeaves">
+                <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
+                <td style="text-align: center;">
+                  <img [src]="getAvatar(leave)" (click)="openImagePreview(leave, $event)" class="avatar-clickable" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); cursor: pointer;" alt="Avatar">
+                </td>
+                <td style="font-weight: 600;">
+                  {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+                </td>
+                <td>{{ leave.personnelOrgUnitNameAr }}</td>
+                <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
+                <td style="text-align: center;"><span class="badge-duration" style="background: rgba(220,38,38,0.15); color: var(--primary);">{{ leave.duration }} يوم</span></td>
+                <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
