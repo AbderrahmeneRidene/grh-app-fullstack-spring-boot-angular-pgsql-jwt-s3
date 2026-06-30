@@ -1,0 +1,93 @@
+<div class="leaves-wrapper animated-fade" style="direction: rtl;">
+  <div class="page-header">
+    <div class="header-title">
+      <h1>تأكيد المباشرات للإجازات المرضية</h1>
+      <p>متابعة وتأكيد استئناف الموظفين للعمل بعد انقضاء الإجازة المرضية أو العودة المبكرة لضرورة المصلحة</p>
+    </div>
+  </div>
+
+  <div class="action-bar glass-card" style="display: flex; gap: 20px; align-items: center; padding: 15px 20px; margin-bottom: 20px; flex-wrap: wrap;">
+    <div class="search-box" style="flex: 1; min-width: 250px; position: relative;">
+      <i class="fa-solid fa-magnifying-glass search-icon" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none;"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="ابحث بالاسم أو المعرّف الوحيد..."
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="applyFilters()"
+        style="padding-right: 36px; width: 100%;">
+    </div>
+    <div class="filter-checkboxes" style="display: flex; gap: 20px; align-items: center; margin-right: 15px;">
+      <span style="color: var(--text-secondary); font-size: 13px; font-weight: 700; margin-left: 5px;">تصفية الإجراء المطلوب:</span>
+      <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 13px; cursor: pointer; user-select: none;">
+        <input type="checkbox" [(ngModel)]="filterDeparture" (change)="applyFilters()" style="accent-color: var(--primary);"> تأكيد الانقطاع عن العمل (البداية)
+      </label>
+      <label style="display: flex; align-items: center; gap: 8px; color: #fff; font-size: 13px; cursor: pointer; user-select: none;">
+        <input type="checkbox" [(ngModel)]="filterResumption" (change)="applyFilters()" style="accent-color: var(--primary);"> تأكيد المباشرة عن العمل (العودة)
+      </label>
+    </div>
+  </div>
+
+  <div class="glass-card list-container" style="padding: 24px;">
+    <div class="container-header">
+      <h3>قائمة إجازات المرض قيد المتابعة</h3>
+      <button (click)="fetchLeaves()" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-arrows-rotate"></i> تحديث البيانات
+      </button>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>المعرّف الوحيد</th>
+            <th style="text-align: center;">الصورة</th>
+            <th>الموظف</th>
+            <th>نوع الإجازة</th>
+            <th>تاريخ الإنقطاع</th>
+            <th style="text-align: center;">المدة</th>
+            <th>تاريخ المباشرة المبرمج</th>
+            <th>الوضعية الحالية</th>
+            <th>الإجراء المطلوب</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let leave of filteredLeaves">
+            <td style="font-weight: 700;">{{ leave.personnelRegistrationNumber }}</td>
+            <td style="text-align: center;">
+              <img [src]="getAvatar(leave)" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);" alt="Avatar">
+            </td>
+            <td style="font-weight: 600;">
+              {{ leave.personnelFirstNameAr }} <span *ngIf="leave.personnelFatherNameAr">{{ leave.personnelFatherNameAr }} </span>{{ leave.personnelLastNameAr }}
+            </td>
+            <td>
+              <span class="badge-type badge-sick">
+                مرضية
+              </span>
+            </td>
+            <td>{{ leave.startDate | date:'yyyy-MM-dd' }}</td>
+            <td style="text-align: center; font-weight: bold;">{{ leave.duration }} يوم</td>
+            <td>{{ leave.returnDate | date:'yyyy-MM-dd' }}</td>
+            <td>
+              <span class="badge" [class.badge-approved]="leave.status === 'APPROVED'" [class.badge-pending]="leave.status === 'LEAVE_STARTED'" style="font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold;">
+                {{ leave.status === 'APPROVED' ? 'موافق عليها (لم تبدأ)' : 'في إجازة مرضية حالياً' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <!-- Action 2: Confirm Resumption (Return to work) -->
+                <button *ngIf="leave.status === 'LEAVE_STARTED'" (click)="confirmResumption(leave)" class="btn btn-success btn-sm" style="display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, var(--success), #059669);">
+                  <i class="fa-solid fa-circle-check"></i> تأكيد المباشرة واستئناف العمل
+                </button>
+                <span *ngIf="leave.status === 'APPROVED'" style="color: var(--text-secondary); font-size: 12px;">بانتظار بدء الإجازة المرضية تلقائياً</span>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredLeaves.length === 0">
+            <td colspan="9" class="no-data">لا توجد إجازات مرضية تتطلب التأكيد حالياً وفق خيارات التصفية المحددة.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

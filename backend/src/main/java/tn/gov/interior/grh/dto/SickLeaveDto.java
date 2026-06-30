@@ -31,4 +31,5 @@ public class SickLeaveDto {
     private String extensionNotes;
     private Long duration;
     private LocalDate returnDate;
+    private String status;
 }

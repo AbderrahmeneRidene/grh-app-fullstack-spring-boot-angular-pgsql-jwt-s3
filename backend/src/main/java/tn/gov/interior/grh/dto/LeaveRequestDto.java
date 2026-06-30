@@ -29,6 +29,9 @@ public class LeaveRequestDto {
     private String status;
     private String justification;
     private String documentPath;
-    private Long duration;
+    private Double duration;
     private LocalDate returnDate;
+    private String exceptionalLeaveType;
+    private String session;
+    private String startTime;
 }

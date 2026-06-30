@@ -323,7 +323,19 @@
                 </td>
                 <td>{{ leave.personnelOrgUnitNameAr }}</td>
                 <td>{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-                <td style="text-align: center;"><span class="badge-duration" style="background: rgba(245,158,11,0.15); color: var(--warning);">{{ leave.duration }} يوم</span></td>
+                <td style="text-align: center;">
+                  <span class="badge-duration" [style.background]="leave.exceptionalLeaveType === 'HALF_DAY' || leave.exceptionalLeaveType === 'TWO_HOURS' ? 'rgba(245,158,11,0.25)' : 'rgba(245,158,11,0.15)'" style="color: var(--warning); display: inline-block; padding: 4px 8px; border-radius: 4px;">
+                    <ng-container *ngIf="leave.exceptionalLeaveType === 'HALF_DAY'">
+                      نصف يوم <span style="font-size: 11px;">({{ leave.session === 'MATINALE' ? 'صباحي - ينتهي 12:30' : 'مسائي - يبدأ 12:30' }})</span>
+                    </ng-container>
+                    <ng-container *ngIf="leave.exceptionalLeaveType === 'TWO_HOURS'">
+                      ساعتان <span style="font-size: 11px;" *ngIf="leave.startTime">(التوقيت: {{ leave.startTime }})</span>
+                    </ng-container>
+                    <ng-container *ngIf="leave.exceptionalLeaveType !== 'HALF_DAY' && leave.exceptionalLeaveType !== 'TWO_HOURS'">
+                      {{ leave.duration }} يوم
+                    </ng-container>
+                  </span>
+                </td>
                 <td style="font-weight: 600; color: var(--success);">{{ leave.returnDate | date:'dd/MM/yyyy' }}</td>
               </tr>
             </tbody>
@@ -650,7 +662,17 @@
                   </td>
                   <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.personnelOrgUnitNameAr }}</td>
                   <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.startDate | date:'dd/MM/yyyy' }}</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 6px;">{{ leave.duration }} يوم</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 6px;">
+                    <ng-container *ngIf="leave.exceptionalLeaveType === 'HALF_DAY'">
+                      نصف يوم ({{ leave.session === 'MATINALE' ? 'صباحي - ينتهي 12:30' : 'مسائي - يبدأ 12:30' }})
+                    </ng-container>
+                    <ng-container *ngIf="leave.exceptionalLeaveType === 'TWO_HOURS'">
+                      ساعتان <span *ngIf="leave.startTime">(التوقيت: {{ leave.startTime }})</span>
+                    </ng-container>
+                    <ng-container *ngIf="leave.exceptionalLeaveType !== 'HALF_DAY' && leave.exceptionalLeaveType !== 'TWO_HOURS'">
+                      {{ leave.duration }} يوم
+                    </ng-container>
+                  </td>
                   <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; color: #15803d;">{{
                     leave.returnDate | date:'dd/MM/yyyy' }}</td>
                 </tr>

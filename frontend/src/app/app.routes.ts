@@ -10,6 +10,8 @@ import { ExceptionalLeavesComponent } from './leaves/exceptional-leaves.componen
 import { MyAnnualLeavesComponent } from './leaves/my-annual-leaves.component';
 import { MyExceptionalLeavesComponent } from './leaves/my-exceptional-leaves.component';
 import { SickLeavesComponent } from './leaves/sick-leaves.component';
+import { LeavesControlComponent } from './leaves/leaves-control.component';
+import { SickLeavesControlComponent } from './leaves/sick-leaves-control.component';
 import { AppSettingsComponent } from './settings/app-settings.component';
 import { authGuard } from './auth/auth.guard';
 
@@ -29,6 +31,8 @@ export const routes: Routes = [
       { path: 'my-annual-leaves', component: MyAnnualLeavesComponent },
       { path: 'my-exceptional-leaves', component: MyExceptionalLeavesComponent },
       { path: 'sick-leaves', component: SickLeavesComponent },
+      { path: 'leaves-control', component: LeavesControlComponent },
+      { path: 'sick-leaves-control', component: SickLeavesControlComponent },
       { path: 'app-settings', component: AppSettingsComponent }
     ]
   },

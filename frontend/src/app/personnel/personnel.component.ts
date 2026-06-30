@@ -263,11 +263,7 @@ export class PersonnelComponent implements OnInit {
     const annualDaysUsed = this.selectedPersonnelLeaves
       .filter(l => l.leaveType === 'ANNUEL' && l.status === 'APPROVED' && new Date(l.startDate).getFullYear() === currentYear)
       .reduce((sum, l) => {
-        const start = new Date(l.startDate);
-        const end = new Date(l.endDate);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        return sum + diffDays;
+        return sum + (l.duration !== null && l.duration !== undefined ? Number(l.duration) : 0);
       }, 0);
     return Math.max(0, 45 - annualDaysUsed);
   }
@@ -278,11 +274,7 @@ export class PersonnelComponent implements OnInit {
     const exceptionalDaysUsed = this.selectedPersonnelLeaves
       .filter(l => l.leaveType === 'EXCEPTIONNEL' && l.status === 'APPROVED' && new Date(l.startDate).getFullYear() === currentYear)
       .reduce((sum, l) => {
-        const start = new Date(l.startDate);
-        const end = new Date(l.endDate);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        return sum + diffDays;
+        return sum + (l.duration !== null && l.duration !== undefined ? Number(l.duration) : 1.0);
       }, 0);
     return Math.max(0, 6 - exceptionalDaysUsed);
   }
@@ -310,9 +302,43 @@ export class PersonnelComponent implements OnInit {
   fetchSelectedPersonnelLeaves(): void {
     if (!this.selectedPersonnel) return;
     const headers = this.authService.getAuthHeaders();
-    this.http.get<any[]>('http://localhost:8080/api/leaves', { headers }).subscribe({
+    this.selectedPersonnelLeaves = [];
+
+    // Fetch Annual Leaves
+    this.http.get<any[]>('http://localhost:8080/api/annual-leaves', { headers }).subscribe({
       next: (data) => {
-        this.selectedPersonnelLeaves = data.filter(l => l.personnelId === this.selectedPersonnel.id);
+        const filtered = data
+          .filter(l => l.personnelId === this.selectedPersonnel.id)
+          .map(l => ({ ...l, leaveType: 'ANNUEL' }));
+        this.selectedPersonnelLeaves = [...this.selectedPersonnelLeaves, ...filtered].sort(
+          (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+        );
+      },
+      error: (err) => console.error(err)
+    });
+
+    // Fetch Exceptional Leaves
+    this.http.get<any[]>('http://localhost:8080/api/exceptional-leaves', { headers }).subscribe({
+      next: (data) => {
+        const filtered = data
+          .filter(l => l.personnelId === this.selectedPersonnel.id)
+          .map(l => ({ ...l, leaveType: 'EXCEPTIONNEL' }));
+        this.selectedPersonnelLeaves = [...this.selectedPersonnelLeaves, ...filtered].sort(
+          (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+        );
+      },
+      error: (err) => console.error(err)
+    });
+
+    // Fetch Sick Leaves
+    this.http.get<any[]>('http://localhost:8080/api/sick-leaves', { headers }).subscribe({
+      next: (data) => {
+        const filtered = data
+          .filter(l => l.personnelId === this.selectedPersonnel.id)
+          .map(l => ({ ...l, leaveType: 'MALADIE' }));
+        this.selectedPersonnelLeaves = [...this.selectedPersonnelLeaves, ...filtered].sort(
+          (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+        );
       },
       error: (err) => console.error(err)
     });

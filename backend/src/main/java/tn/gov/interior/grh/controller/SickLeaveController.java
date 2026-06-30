@@ -26,6 +26,12 @@ public class SickLeaveController {
     @Autowired
     private OrganizationalUnitRepository organizationalUnitRepository;
 
+    @Autowired
+    private AnnualLeaveRepository annualLeaveRepository;
+
+    @Autowired
+    private ExceptionalLeaveRepository exceptionalLeaveRepository;
+
     @GetMapping
     public ResponseEntity<List<SickLeaveDto>> getSickLeaves() {
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -97,6 +103,10 @@ public class SickLeaveController {
         if (dto.getEndDate().isBefore(dto.getStartDate())) {
             return ResponseEntity.badRequest().body("تاريخ النهاية لا يمكن أن يكون قبل تاريخ البداية");
         }
+        // Vérification du chevauchement de congés (Annual, Exceptional & Sick)
+        if (hasOverlap(targetPersonnel.getId(), dto.getStartDate(), dto.getEndDate())) {
+            return ResponseEntity.badRequest().body("الموظف لديه إجازة أخرى أو طلب إجازة قيد الدراسة في نفس الفترة.");
+        }
 
         // Generate leaveCode
         String leaveCode = generateNextLeaveCode();
@@ -152,6 +162,43 @@ public class SickLeaveController {
 
         SickLeave saved = sickLeaveRepository.save(sickLeave);
         return ResponseEntity.ok(convertToDto(saved));
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ROLE_CHEF_SERVICE', 'ROLE_CHEF_SOUS_DIRECTION', 'ROLE_ADMIN_DIRECTION', 'ROLE_AGENT_RH')")
+    @Transactional
+    public ResponseEntity<?> updateLeaveStatus(@PathVariable Long id, @RequestParam("status") String status, @RequestParam(value = "justification", required = false) String justification) {
+        Optional<SickLeave> requestOpt = sickLeaveRepository.findById(id);
+        if (requestOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        SickLeave request = requestOpt.get();
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        boolean isAgentRh = principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_AGENT_RH"));
+
+        if (isAgentRh) {
+            List<String> allowedAgentRhStatuses = Arrays.asList("LEAVE_STARTED", "WORK_RESUMED");
+            if (!allowedAgentRhStatuses.contains(status)) {
+                return ResponseEntity.badRequest().body("ليس لديك الصلاحية لتغيير هذه الحالة.");
+            }
+        }
+        
+        // If resuming work early, adjust the end date to yesterday to reflect actual return date
+        if ("WORK_RESUMED".equals(status)) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            if (request.getEndDate() != null && request.getEndDate().isAfter(today)) {
+                request.setEndDate(today.minusDays(1));
+            }
+        }
+
+        request.setStatus(status);
+        if (justification != null) {
+            request.setJustification(justification);
+        }
+
+        SickLeave updated = sickLeaveRepository.save(request);
+        return ResponseEntity.ok(convertToDto(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -214,6 +261,42 @@ public class SickLeaveController {
                 .extensionNotes(sl.getExtensionNotes())
                 .duration(duration)
                 .returnDate(returnDate)
+                .status(sl.getStatus())
                 .build();
+    }
+
+    private boolean hasOverlap(Long personnelId, java.time.LocalDate start, java.time.LocalDate end) {
+        // Check annual leaves
+        List<AnnualLeave> annualList = annualLeaveRepository.findByPersonnelId(personnelId);
+        for (AnnualLeave existing : annualList) {
+            if (!"REJECTED".equals(existing.getStatus())) {
+                if (existing.getStartDate() != null && existing.getEndDate() != null) {
+                    if (!existing.getStartDate().isAfter(end) && !existing.getEndDate().isBefore(start)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        // Check exceptional leaves
+        List<ExceptionalLeave> exceptionalList = exceptionalLeaveRepository.findByPersonnelId(personnelId);
+        for (ExceptionalLeave existing : exceptionalList) {
+            if (!"REJECTED".equals(existing.getStatus())) {
+                if (existing.getStartDate() != null && existing.getEndDate() != null) {
+                    if (!existing.getStartDate().isAfter(end) && !existing.getEndDate().isBefore(start)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        // Check sick leaves
+        List<SickLeave> sickList = sickLeaveRepository.findByPersonnelId(personnelId);
+        for (SickLeave existing : sickList) {
+            if (existing.getStartDate() != null && existing.getEndDate() != null) {
+                if (!existing.getStartDate().isAfter(end) && !existing.getEndDate().isBefore(start)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

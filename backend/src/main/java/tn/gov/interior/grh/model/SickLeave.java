@@ -40,4 +40,8 @@ public class SickLeave {
 
     @Column(name = "extension_notes")
     private String extensionNotes; // Notes added when extending the leave
+
+    @Builder.Default
+    @Column(nullable = false)
+    private String status = "LEAVE_STARTED";
 }

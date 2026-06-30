@@ -167,9 +167,9 @@ public class DashboardController {
     }
 
     private LeaveRequestDto convertSickLeaveToDto(SickLeave sl) {
-        long duration = 0;
+        double duration = 0.0;
         if (sl.getStartDate() != null && sl.getEndDate() != null) {
-            duration = java.time.temporal.ChronoUnit.DAYS.between(sl.getStartDate(), sl.getEndDate()) + 1;
+            duration = java.time.temporal.ChronoUnit.DAYS.between(sl.getStartDate(), sl.getEndDate()) + 1.0;
         }
         LocalDate returnDate = sl.getEndDate() != null ? sl.getEndDate().plusDays(1) : null;
 
@@ -200,9 +200,9 @@ public class DashboardController {
     }
 
     private LeaveRequestDto convertAnnualLeaveToDto(AnnualLeave al) {
-        long duration = 0;
+        double duration = 0.0;
         if (al.getStartDate() != null && al.getEndDate() != null) {
-            duration = java.time.temporal.ChronoUnit.DAYS.between(al.getStartDate(), al.getEndDate()) + 1;
+            duration = java.time.temporal.ChronoUnit.DAYS.between(al.getStartDate(), al.getEndDate()) + 1.0;
         }
         LocalDate returnDate = al.getEndDate() != null ? al.getEndDate().plusDays(1) : null;
 
@@ -233,10 +233,6 @@ public class DashboardController {
     }
 
     private LeaveRequestDto convertExceptionalLeaveToDto(ExceptionalLeave el) {
-        long duration = 0;
-        if (el.getStartDate() != null && el.getEndDate() != null) {
-            duration = java.time.temporal.ChronoUnit.DAYS.between(el.getStartDate(), el.getEndDate()) + 1;
-        }
         LocalDate returnDate = el.getEndDate() != null ? el.getEndDate().plusDays(1) : null;
 
         return LeaveRequestDto.builder()
@@ -260,8 +256,11 @@ public class DashboardController {
                 .status(el.getStatus())
                 .justification(el.getJustification())
                 .documentPath(el.getDocumentPath())
-                .duration(duration)
+                .duration(el.getDuration() != null ? el.getDuration() : 1.0)
                 .returnDate(returnDate)
+                .exceptionalLeaveType(el.getExceptionalLeaveType())
+                .session(el.getSession())
+                .startTime(el.getStartTime())
                 .build();
     }
 }
